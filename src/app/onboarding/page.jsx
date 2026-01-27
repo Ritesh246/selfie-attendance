@@ -64,7 +64,7 @@ export default function OnboardingPage() {
     if (role === "professor") {
       router.push("/professor/dashboard");
     } else {
-      router.push("/student/dashboard");
+      router.push("/student/register-face");
     }
   };
 
