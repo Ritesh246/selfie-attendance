@@ -13,6 +13,55 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // 🔑 CENTRAL POST-LOGIN ROUTING LOGIC
+  const handlePostLoginRedirect = async () => {
+    const { data: authData } = await supabase.auth.getUser();
+    const user = authData?.user;
+
+    if (!user) {
+      router.push("/auth/login");
+      return;
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, face_registered")
+      .eq("id", user.id)
+      .single();
+
+    // No profile yet → onboarding
+    if (!profile) {
+      router.push("/onboarding");
+      return;
+    }
+
+    // Role not selected yet
+    if (!profile.role) {
+      router.push("/onboarding");
+      return;
+    }
+
+    // Student but face not registered
+    if (profile.role === "student" && !profile.face_registered) {
+      router.push("/student/register-face");
+      return;
+    }
+
+    // ✅ Fully onboarded
+    if (profile.role === "student") {
+      router.push("/student/dashboard");
+      return;
+    }
+
+    if (profile.role === "professor") {
+      router.push("/professor/dashboard");
+      return;
+    }
+
+    // fallback
+    router.push("/onboarding");
+  };
+
   // Email + Password login
   const handleEmailLogin = async () => {
     setError("");
@@ -30,8 +79,7 @@ export default function LoginPage() {
       return;
     }
 
-    // Login successful → go to onboarding (profile check comes next step)
-    router.push("/onboarding");
+    await handlePostLoginRedirect();
   };
 
   // Google login
@@ -41,20 +89,22 @@ export default function LoginPage() {
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/onboarding`,
-      },
     });
 
     setLoading(false);
 
-    if (error) setError(error.message);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    // Google redirects back → session already exists
+    await handlePostLoginRedirect();
   };
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-neutral-950 px-4">
       <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-6">
-        
         <h1 className="text-2xl font-bold text-neutral-900 text-center mb-6">
           Login
         </h1>
@@ -65,7 +115,7 @@ export default function LoginPage() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full border border-neutral-300 px-3 py-2 rounded text-neutral-900 focus:outline-none focus:ring-2 focus:ring-black"
+            className="w-full border border-neutral-300 px-3 py-2 rounded text-neutral-800"
           />
 
           <input
@@ -73,19 +123,17 @@ export default function LoginPage() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full border border-neutral-300 px-3 py-2 rounded text-neutral-900 focus:outline-none focus:ring-2 focus:ring-black"
+            className="w-full border border-neutral-300 px-3 py-2 rounded text-neutral-800"
           />
 
           {error && (
-            <p className="text-sm text-red-600 text-center">
-              {error}
-            </p>
+            <p className="text-sm text-red-600 text-center">{error}</p>
           )}
 
           <button
             onClick={handleEmailLogin}
             disabled={loading}
-            className="w-full bg-black text-white py-2 rounded hover:bg-neutral-800 transition disabled:opacity-60"
+            className="w-full bg-black text-white py-2 rounded disabled:opacity-60"
           >
             {loading ? "Logging in..." : "Login with Email"}
           </button>
@@ -99,7 +147,7 @@ export default function LoginPage() {
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full gap-1 flex justify-center items-center border border-neutral-300 py-2 rounded text-neutral-800 hover:bg-neutral-100 transition"
+            className="w-full gap-1 flex justify-center items-center border  border-neutral-300 py-2 rounded text-neutral-800 hover:bg-neutral-100 transition "
           >
             <img className="w-8 h-8" src="/google.png" alt="google" />
             Continue with Google
