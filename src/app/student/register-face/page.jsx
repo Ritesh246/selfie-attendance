@@ -8,6 +8,7 @@ export default function RegisterFacePage() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
+  const cameraStartedRef = useRef(false);
 
   const router = useRouter();
 
@@ -30,45 +31,38 @@ export default function RegisterFacePage() {
 
   /* ---------------- START CAMERA ---------------- */
   useEffect(() => {
-  let mediaStream;
-  let checkInterval;
+    if (cameraStartedRef.current) return;
+    cameraStartedRef.current = true;
 
-  const startCamera = async () => {
-    try {
-      mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+    const startCamera = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-        videoRef.current.play();
+        streamRef.current = stream;
 
-        // 🔑 reliable readiness check
-        checkInterval = setInterval(() => {
-          if (
-            videoRef.current &&
-            videoRef.current.videoWidth > 0 &&
-            videoRef.current.videoHeight > 0
-          ) {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.onloadeddata = () => {
             setCameraReady(true);
-            clearInterval(checkInterval);
-          }
-        }, 100);
+            videoRef.current.play();
+          };
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Camera access denied");
       }
-    } catch (err) {
-      console.error(err);
-      setError("Camera access denied");
-    }
-  };
+    };
 
-  startCamera();
+    startCamera();
 
-  return () => {
-    if (checkInterval) clearInterval(checkInterval);
-    if (mediaStream) {
-      mediaStream.getTracks().forEach((t) => t.stop());
-    }
-  };
-}, []);
-
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+      }
+    };
+  }, []);
 
   /* ---------------- AUTO HIDE ERROR ---------------- */
   useEffect(() => {
@@ -87,9 +81,8 @@ export default function RegisterFacePage() {
       return;
     }
 
-    // ✅ This is the IMPORTANT readiness check
-    if (video.readyState < 2) {
-      setError("Camera still starting…");
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      setError("Camera initializing… please wait");
       return;
     }
 
@@ -97,9 +90,16 @@ export default function RegisterFacePage() {
     canvas.height = video.videoHeight;
 
     const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0);
+    
+    // Draw the image from the video onto the canvas
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    setCaptured(true); // ✅ shows Submit & Continue
+    setCaptured(true);
+  };
+
+  /* ---------------- RETAKE PHOTO (Optional) ---------------- */
+  const retakePhoto = () => {
+    setCaptured(false);
   };
 
   /* ---------------- SUBMIT PHOTO ---------------- */
@@ -118,8 +118,9 @@ export default function RegisterFacePage() {
 
       const filePath = `students/${user.id}.jpg`;
 
+      // 1. Upload Image to Storage
       const { error: uploadError } = await supabase.storage
-        .from("face-images")
+        .from("face-images") // Make sure this bucket exists
         .upload(filePath, blob, {
           upsert: true,
           contentType: "image/jpeg",
@@ -131,6 +132,7 @@ export default function RegisterFacePage() {
         return;
       }
 
+      // 2. Update User Profile in Database
       const { error: dbError } = await supabase
         .from("profiles")
         .update({
@@ -139,13 +141,14 @@ export default function RegisterFacePage() {
         })
         .eq("id", user.id);
 
+      setLoading(false);
+
       if (dbError) {
         setError(dbError.message);
-        setLoading(false);
         return;
       }
 
-      // stop camera AFTER success
+      // Stop camera streams
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop());
       }
@@ -167,23 +170,24 @@ export default function RegisterFacePage() {
           This will be used for attendance verification
         </p>
 
-        {!captured ? (
+        {/* --- FIXED SECTION START --- */}
+        {/* We keep both elements in the DOM, but hide one using CSS */}
+        <div className="relative w-full mb-4">
           <video
             ref={videoRef}
             autoPlay
             playsInline
-            className="w-full rounded mb-4"
+            muted
+            className={`w-full rounded ${captured ? "hidden" : "block"}`}
           />
-        ) : (
           <canvas
             ref={canvasRef}
-            className="w-full rounded mb-4"
+            className={`w-full rounded ${!captured ? "hidden" : "block"}`}
           />
-        )}
+        </div>
+        {/* --- FIXED SECTION END --- */}
 
-        {error && (
-          <p className="text-sm text-red-600 mb-2">{error}</p>
-        )}
+        {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
 
         {!captured ? (
           <button
@@ -194,13 +198,22 @@ export default function RegisterFacePage() {
             {cameraReady ? "Capture Face" : "Starting Camera…"}
           </button>
         ) : (
-          <button
-            onClick={submitPhoto}
-            disabled={loading}
-            className="w-full bg-black text-white py-2 rounded disabled:opacity-60"
-          >
-            {loading ? "Uploading..." : "Submit & Continue"}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={retakePhoto}
+              disabled={loading}
+              className="w-1/2 bg-gray-200 text-black py-2 rounded"
+            >
+              Retake
+            </button>
+            <button
+              onClick={submitPhoto}
+              disabled={loading}
+              className="w-1/2 bg-black text-white py-2 rounded disabled:opacity-60"
+            >
+              {loading ? "Uploading..." : "Submit"}
+            </button>
+          </div>
         )}
       </div>
     </main>
