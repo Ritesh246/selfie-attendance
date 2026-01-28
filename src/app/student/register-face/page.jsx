@@ -104,58 +104,77 @@ export default function RegisterFacePage() {
 
   /* ---------------- SUBMIT PHOTO ---------------- */
   const submitPhoto = async () => {
-    if (!user || !canvasRef.current) return;
+  if (!user || !canvasRef.current) return;
 
-    setLoading(true);
-    setError("");
+  setLoading(true);
+  setError("");
 
-    canvasRef.current.toBlob(async (blob) => {
-      if (!blob) {
-        setError("Failed to capture image");
-        setLoading(false);
-        return;
-      }
-
-      const filePath = `students/${user.id}.jpg`;
-
-      // 1. Upload Image to Storage
-      const { error: uploadError } = await supabase.storage
-        .from("face-images") // Make sure this bucket exists
-        .upload(filePath, blob, {
-          upsert: true,
-          contentType: "image/jpeg",
-        });
-
-      if (uploadError) {
-        setError(uploadError.message);
-        setLoading(false);
-        return;
-      }
-
-      // 2. Update User Profile in Database
-      const { error: dbError } = await supabase
-        .from("profiles")
-        .update({
-          face_image_path: filePath,
-          face_registered: true,
-        })
-        .eq("id", user.id);
-
+  canvasRef.current.toBlob(async (blob) => {
+    if (!blob) {
+      setError("Failed to capture image");
       setLoading(false);
+      return;
+    }
 
-      if (dbError) {
-        setError(dbError.message);
-        return;
-      }
+    const filePath = `students/${user.id}.jpg`;
 
-      // Stop camera streams
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
-      }
+    // 1. Upload Image to Storage
+    const { error: uploadError } = await supabase.storage
+      .from("face-images")
+      .upload(filePath, blob, {
+        upsert: true,
+        contentType: "image/jpeg",
+      });
 
-      router.push("/student/dashboard");
-    }, "image/jpeg");
-  };
+    if (uploadError) {
+      setError(uploadError.message);
+      setLoading(false);
+      return;
+    }
+
+    // 2. Update User Profile
+    const { error: dbError } = await supabase
+      .from("profiles")
+      .update({
+        face_image_path: filePath,
+        face_registered: true,
+      })
+      .eq("id", user.id);
+
+    if (dbError) {
+      setError(dbError.message);
+      setLoading(false);
+      return;
+    }
+
+    // 3. Fetch role for routing
+    const { data: profile, error: roleError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    setLoading(false);
+
+    if (roleError) {
+      setError(roleError.message);
+      return;
+    }
+
+    // Stop camera streams
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+    }
+
+    // 4. Role-based routing
+    if (profile.role === "professor") {
+      router.push("/professor/classroom");
+    } else {
+      router.push("/student/classroom");
+    }
+  }, "image/jpeg");
+};
+
 
   if (!user) return null;
 

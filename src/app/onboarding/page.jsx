@@ -62,7 +62,7 @@ export default function OnboardingPage() {
 
     // Redirect based on role (dashboards will be built later)
     if (role === "professor") {
-      router.push("/professor/dashboard");
+      router.push("/professor/classroom");
     } else {
       router.push("/student/register-face");
     }

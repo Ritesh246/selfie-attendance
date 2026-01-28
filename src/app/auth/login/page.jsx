@@ -49,12 +49,12 @@ export default function LoginPage() {
 
     // ✅ Fully onboarded
     if (profile.role === "student") {
-      router.push("/student/dashboard");
+      router.push("/student/classroom");
       return;
     }
 
     if (profile.role === "professor") {
-      router.push("/professor/dashboard");
+      router.push("/professor/classroom");
       return;
     }
 
