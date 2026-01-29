@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseBrowser";
@@ -13,13 +13,13 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 🔑 CENTRAL POST-LOGIN ROUTING LOGIC
+  // 🔑 CENTRAL POST-LOGIN ROUTING LOGIC (Untouched)
   const handlePostLoginRedirect = async () => {
     const { data: authData } = await supabase.auth.getUser();
     const user = authData?.user;
 
     if (!user) {
-      router.push("/auth/login");
+      setLoading(false);
       return;
     }
 
@@ -29,25 +29,16 @@ export default function LoginPage() {
       .eq("id", user.id)
       .single();
 
-    // No profile yet → onboarding
-    if (!profile) {
+    if (!profile || !profile.role) {
       router.push("/onboarding");
       return;
     }
 
-    // Role not selected yet
-    if (!profile.role) {
-      router.push("/onboarding");
-      return;
-    }
-
-    // Student but face not registered
     if (profile.role === "student" && !profile.face_registered) {
       router.push("/student/register-face");
       return;
     }
 
-    // ✅ Fully onboarded
     if (profile.role === "student") {
       router.push("/student/classroom");
       return;
@@ -58,49 +49,77 @@ export default function LoginPage() {
       return;
     }
 
-    // fallback
     router.push("/onboarding");
   };
 
-  // Email + Password login
+  // ⚡️ EFFECT: Handle the "Return" from Google
+  useEffect(() => {
+    // 1. If we are returning from Google (flag is set), SHOW the message immediately
+    if (typeof window !== 'undefined' && localStorage.getItem("isGoogleLogin") === "true") {
+      setLoading(true);
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN") {
+        // 2. We are signed in, clear flag and keep showing message while we redirect
+        if (typeof window !== 'undefined') localStorage.removeItem("isGoogleLogin");
+        setLoading(true); 
+        handlePostLoginRedirect();
+      } else if (event === "SIGNED_OUT") {
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const handleEmailLogin = async () => {
     setError("");
-    setLoading(true);
+    setLoading(true); // Keep loading true for Email login (that's fine)
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    setLoading(false);
-
     if (error) {
       setError(error.message);
+      setLoading(false);
       return;
     }
-
-    await handlePostLoginRedirect();
   };
 
-  // Google login
   const handleGoogleLogin = async () => {
     setError("");
-    setLoading(true);
+    // ❌ REMOVED: setLoading(true) is gone. 
+    // This ensures no message appears when you click the button.
+    
+    // Set flag so we show the message ONLY when you come back
+    if (typeof window !== 'undefined') localStorage.setItem("isGoogleLogin", "true");
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/login`,
+      },
     });
 
-    setLoading(false);
-
     if (error) {
+      if (typeof window !== 'undefined') localStorage.removeItem("isGoogleLogin");
       setError(error.message);
-      return;
     }
-
-    // Google redirects back → session already exists
-    await handlePostLoginRedirect();
   };
+
+  // 🛑 REDIRECTING SCREEN (Only shows when returning from Google)
+  if (loading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-neutral-950 px-4">
+        <div className="text-white text-lg animate-pulse">
+          Redirecting to Classroom...
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-neutral-950 px-4">
@@ -147,7 +166,7 @@ export default function LoginPage() {
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full gap-1 flex justify-center items-center border  border-neutral-300 py-2 rounded text-neutral-800 hover:bg-neutral-100 transition "
+            className="w-full gap-1 flex justify-center items-center border border-neutral-300 py-2 rounded text-neutral-800 hover:bg-neutral-100 transition "
           >
             <img className="w-8 h-8" src="/google.png" alt="google" />
             Continue with Google

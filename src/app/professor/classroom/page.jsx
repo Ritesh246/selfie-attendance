@@ -1,65 +1,142 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseBrowser";
 
 export default function ProfessorClassroomPage() {
+  const router = useRouter();
+
+  // ---------- STATE ----------
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [classes, setClasses] = useState([]);
+
   const [showModal, setShowModal] = useState(false);
   const [className, setClassName] = useState("");
-  const [classCode, setClassCode] = useState(generateClassCode());
+  const [classCode, setClassCode] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function generateClassCode() {
-    return Math.random().toString(36).substring(2, 7);
-  }
+  // ---------- HELPERS ----------
+  const generateClassCode = () =>
+    Math.random().toString(36).substring(2, 7);
 
-  function openModal() {
+  const openModal = () => {
     setClassName("");
     setClassCode(generateClassCode());
     setShowModal(true);
-  }
+  };
 
-  function createClass() {
+  const closeModal = () => {
+    setShowModal(false);
+  };
+
+  // ---------- ROUTE PROTECTION + FETCH ----------
+  useEffect(() => {
+    const checkAccessAndFetch = async () => {
+      const { data: authData } = await supabase.auth.getUser();
+      const user = authData?.user;
+
+      if (!user) {
+        router.push("/auth/login");
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile || profile.role !== "professor") {
+        router.push("/student/classroom");
+        return;
+      }
+
+      // Fetch only this professor's classes
+      const { data: classData } = await supabase
+        .from("classes")
+        .select("*")
+        .eq("professor_id", user.id)
+        .order("created_at", { ascending: false });
+
+      setClasses(classData || []);
+      setCheckingAuth(false);
+    };
+
+    checkAccessAndFetch();
+  }, [router]);
+
+  // ---------- CREATE CLASS ----------
+  const createClass = async () => {
     if (!className.trim()) return;
 
-    setClasses((prev) => [
-      ...prev,
-      { name: className, code: classCode },
-    ]);
+    setLoading(true);
 
+    const { data: authData } = await supabase.auth.getUser();
+    const user = authData?.user;
+
+    await supabase.from("classes").insert({
+      name: className,
+      code: classCode,
+      professor_id: user.id,
+    });
+
+    // Refresh classes
+    const { data: classData } = await supabase
+      .from("classes")
+      .select("*")
+      .eq("professor_id", user.id)
+      .order("created_at", { ascending: false });
+
+    setClasses(classData || []);
+    setLoading(false);
     setShowModal(false);
+  };
+
+  // ---------- LOADING GUARD ----------
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Checking access...
+      </div>
+    );
   }
 
+  // ---------- UI ----------
   return (
-    <div className="min-h-screen bg-gray-50 relative">
+    <div className="min-h-screen bg-gray-50">
       {/* Top Bar */}
-      <div className="flex items-center justify-between px-4 sm:px-8 py-4 bg-white shadow">
-        <h1 className="text-lg sm:text-2xl font-semibold">
+      <div className="flex items-center justify-between px-6 py-4 bg-white shadow">
+        <h1 className="text-2xl font-semibold text-black">
           Professor Classroom
         </h1>
         <button
           onClick={openModal}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm sm:text-base hover:bg-blue-700 transition"
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
         >
           Create a class
         </button>
       </div>
 
-      {/* Classroom Grid */}
-      <div className="p-4 sm:p-8">
+      {/* Classes Grid */}
+      <div className="p-6">
         {classes.length === 0 ? (
-          <p className="text-center text-gray-500 mt-20">
+          <p className="text-center text-black mt-20">
             No classes created yet
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {classes.map((cls, index) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {classes.map((cls) => (
               <div
-                key={index}
-                className="bg-white rounded-lg shadow p-6 hover:shadow-md transition"
+                key={cls.id}
+                className="bg-white rounded-lg shadow p-6"
               >
-                <h2 className="text-xl font-semibold mb-2">{cls.name}</h2>
-                <p className="text-gray-600">
-                  Class Code: <span className="font-mono">{cls.code}</span>
+                <h2 className="text-xl font-semibold text-black mb-2">
+                  {cls.name}
+                </h2>
+                <p className="text-black">
+                  Class Code:{" "}
+                  <span className="font-mono">{cls.code}</span>
                 </p>
               </div>
             ))}
@@ -67,51 +144,40 @@ export default function ProfessorClassroomPage() {
         )}
       </div>
 
-      {/* Modal Overlay */}
+      {/* Create Class Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4">
           <div className="bg-white rounded-lg w-full max-w-md p-6">
-            <h2 className="text-xl font-semibold mb-4">
+            <h2 className="text-xl font-semibold text-black mb-4">
               Create a new class
             </h2>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">
-                Class Name
-              </label>
-              <input
-                type="text"
-                value={className}
-                onChange={(e) => setClassName(e.target.value)}
-                placeholder="e.g. IOT"
-                className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+            <input
+              value={className}
+              onChange={(e) => setClassName(e.target.value)}
+              placeholder="Class name (e.g. IOT)"
+              className="w-full border px-3 py-2 rounded mb-4 text-black"
+            />
 
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-1">
-                Class Code
-              </label>
-              <input
-                type="text"
-                value={classCode}
-                readOnly
-                className="w-full border rounded-md px-3 py-2 bg-gray-100 font-mono"
-              />
-            </div>
+            <input
+              value={classCode}
+              readOnly
+              className="w-full border px-3 py-2 rounded bg-gray-100 font-mono mb-6 text-black"
+            />
 
             <div className="flex justify-end gap-3">
               <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 rounded-md border hover:bg-gray-100 transition"
+                onClick={closeModal}
+                className="border px-4 py-2 rounded"
               >
                 Cancel
               </button>
               <button
                 onClick={createClass}
-                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
+                disabled={loading}
+                className="bg-blue-600 text-white px-4 py-2 rounded"
               >
-                Create
+                {loading ? "Creating..." : "Create"}
               </button>
             </div>
           </div>
