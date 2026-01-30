@@ -17,8 +17,7 @@ export default function ProfessorClassroomPage() {
   const [loading, setLoading] = useState(false);
 
   // ---------- HELPERS ----------
-  const generateClassCode = () =>
-    Math.random().toString(36).substring(2, 7);
+  const generateClassCode = () => Math.random().toString(36).substring(2, 7);
 
   const openModal = () => {
     setClassName("");
@@ -121,22 +120,20 @@ export default function ProfessorClassroomPage() {
       {/* Classes Grid */}
       <div className="p-6">
         {classes.length === 0 ? (
-          <p className="text-center text-black mt-20">
-            No classes created yet
-          </p>
+          <p className="text-center text-black mt-20">No classes created yet</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 cursor-pointer">
             {classes.map((cls) => (
               <div
                 key={cls.id}
-                className="bg-white rounded-lg shadow p-6"
+                onClick={() => router.push(`/professor/classroom/${cls.code}`)}
+                className="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-md transition"
               >
                 <h2 className="text-xl font-semibold text-black mb-2">
                   {cls.name}
                 </h2>
                 <p className="text-black">
-                  Class Code:{" "}
-                  <span className="font-mono">{cls.code}</span>
+                  Class Code: <span className="font-mono">{cls.code}</span>
                 </p>
               </div>
             ))}
@@ -166,10 +163,7 @@ export default function ProfessorClassroomPage() {
             />
 
             <div className="flex justify-end gap-3">
-              <button
-                onClick={closeModal}
-                className="border px-4 py-2 rounded"
-              >
+              <button onClick={closeModal} className="border px-4 py-2 rounded">
                 Cancel
               </button>
               <button

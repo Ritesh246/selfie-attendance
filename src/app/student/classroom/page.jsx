@@ -88,12 +88,10 @@ export default function StudentClassroomPage() {
     }
 
     // 2. Join class
-    const { error: joinError } = await supabase
-      .from("class_students")
-      .insert({
-        class_id: foundClass.id,
-        student_id: user.id,
-      });
+    const { error: joinError } = await supabase.from("class_students").insert({
+      class_id: foundClass.id,
+      student_id: user.id,
+    });
 
     if (joinError) {
       setError("You already joined this class");
@@ -126,9 +124,7 @@ export default function StudentClassroomPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Top Bar */}
       <div className="flex items-center justify-between px-6 py-4 bg-white shadow">
-        <h1 className="text-2xl font-semibold text-black">
-          Student Classroom
-        </h1>
+        <h1 className="text-2xl font-semibold text-black">Student Classroom</h1>
         <button
           onClick={openModal}
           className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
@@ -140,19 +136,16 @@ export default function StudentClassroomPage() {
       {/* Classes */}
       <div className="p-6">
         {classes.length === 0 ? (
-          <p className="text-center text-black mt-20">
-            No classes joined yet
-          </p>
+          <p className="text-center text-black mt-20">No classes joined yet</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {classes.map((cls) => (
               <div
                 key={cls.id}
-                className="bg-white rounded-lg shadow p-6"
+                onClick={() => router.push(`/student/classroom/${cls.code}`)}
+                className="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-md transition"
               >
-                <h2 className="text-xl font-semibold text-black">
-                  {cls.name}
-                </h2>
+                <h2 className="text-xl font-semibold text-black">{cls.name}</h2>
               </div>
             ))}
           </div>
@@ -174,17 +167,10 @@ export default function StudentClassroomPage() {
               className="w-full border px-3 py-2 rounded mb-3 text-black"
             />
 
-            {error && (
-              <p className="text-sm text-red-600 mb-3">
-                {error}
-              </p>
-            )}
+            {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
 
             <div className="flex justify-end gap-3">
-              <button
-                onClick={closeModal}
-                className="border px-4 py-2 rounded"
-              >
+              <button onClick={closeModal} className="border px-4 py-2 rounded">
                 Cancel
               </button>
               <button
