@@ -2,8 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 export default function StudentSelfiePage() {
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get("sessionId");
   const { classCode } = useParams();
 
   const videoRef = useRef(null);
@@ -34,7 +37,7 @@ export default function StudentSelfiePage() {
 
   const stopCamera = () => {
     if (videoRef.current?.srcObject) {
-      videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
     }
   };
 
@@ -87,6 +90,14 @@ export default function StudentSelfiePage() {
       alert("Selfie submitted (UI-only demo)");
     }, 1500);
   };
+
+  if (!sessionId) {
+    return (
+      <div className="p-6 text-red-500">
+        Invalid or expired attendance session
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -166,9 +177,7 @@ export default function StudentSelfiePage() {
             onClick={handleSubmit}
             disabled={isSubmitting}
             className={`px-4 py-2 rounded w-full text-white ${
-              isSubmitting
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600"
+              isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600"
             }`}
           >
             {isSubmitting ? "Submitting..." : "Submit"}

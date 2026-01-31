@@ -14,7 +14,7 @@ export async function POST(req) {
 
     const supabase = createSupabaseServerClient();
 
-    // 1️⃣ Get session + class
+    // 1️⃣ Fetch current session
     const { data: session, error: fetchError } = await supabase
       .from("attendance_sessions")
       .select("id, class_id")
@@ -28,15 +28,23 @@ export async function POST(req) {
       );
     }
 
-    // 2️⃣ Deactivate any existing active session for this class
-    await supabase
+    // 2️⃣ Deactivate ANY active session for this class
+    const { error: deactivateError } = await supabase
       .from("attendance_sessions")
       .update({
         is_active: false,
-        status: "expired",
+        status: "created", // ✅ ONLY ALLOWED VALUE
       })
       .eq("class_id", session.class_id)
       .eq("is_active", true);
+
+    if (deactivateError) {
+      console.error("Deactivation error:", deactivateError);
+      return NextResponse.json(
+        { error: "Failed to deactivate old session" },
+        { status: 500 }
+      );
+    }
 
     // 3️⃣ Activate current session
     const { error: activateError } = await supabase
@@ -59,7 +67,7 @@ export async function POST(req) {
     return NextResponse.json({ success: true });
 
   } catch (err) {
-    console.error("Activate error:", err);
+    console.error("Activate route error:", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
