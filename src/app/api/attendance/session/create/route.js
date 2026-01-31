@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseServer";
+import { createSupabaseServerClient } from "@/lib/supabaseServer";
 
 // Generate 5-digit numeric code
 function generateAttendanceCode() {
@@ -8,24 +8,25 @@ function generateAttendanceCode() {
 
 export async function POST(req) {
   try {
-    const { classCode } = await req.json();
+    const { classId } = await req.json();
 
-    if (!classCode) {
+    if (!classId) {
       return NextResponse.json(
-        { error: "classCode is required" },
+        { error: "classId required" },
         { status: 400 }
       );
     }
 
+    const supabase = createSupabaseServerClient();
+
+    // 🔑 GET PROFESSOR ID FROM CLASS
     const { data: classData, error: classError } = await supabase
       .from("classes")
       .select("id, professor_id")
-      .eq("code", classCode)
+      .eq("id", classId)
       .single();
 
-
     if (classError || !classData) {
-      console.error("Class fetch error:", classError);
       return NextResponse.json(
         { error: "Invalid class" },
         { status: 404 }
@@ -34,35 +35,34 @@ export async function POST(req) {
 
     const attendanceCode = generateAttendanceCode();
 
-    // 2️⃣ Insert attendance session
-    const { data: session, error: insertError } = await supabase
+    // ✅ CREATE ATTENDANCE SESSION
+    const { data, error } = await supabase
       .from("attendance_sessions")
       .insert({
         class_id: classData.id,
-        professor_id: classData.professor_id,
+        professor_id: classData.professor_id, // ✅ NEVER NULL NOW
         attendance_code: attendanceCode,
+        status: "created",
         is_active: false,
-        status: "created"
       })
       .select()
       .single();
 
-    if (insertError) {
-      console.error("Insert error:", insertError);
+    if (error) {
+      console.error("Insert error:", error);
       return NextResponse.json(
         { error: "Failed to create session" },
         { status: 500 }
       );
     }
 
-    // 3️⃣ Success
     return NextResponse.json({
-      session_id: session.id,
-      attendance_code: session.attendance_code
+      sessionId: data.id,
+      attendanceCode: data.attendance_code,
     });
 
   } catch (err) {
-    console.error("Create session error:", err);
+    console.error("Server crash:", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
