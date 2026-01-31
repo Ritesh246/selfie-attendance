@@ -8,12 +8,21 @@ export default function StudentClassPage() {
   const router = useRouter();
 
   const [attendanceCode, setAttendanceCode] = useState("");
+  const [isJoining, setIsJoining] = useState(false);
 
   const handleJoin = () => {
     if (!attendanceCode.trim()) return;
-    // Validation will come later
-    router.push(`/student/classroom/${classCode}/selfie`);
+    if (isJoining) return;
+
+    setIsJoining(true);
+
+    // UI-only simulation (later replaced by code validation API)
+    setTimeout(() => {
+      router.push(`/student/classroom/${classCode}/selfie`);
+    }, 800);
   };
+
+  const isDisabled = !attendanceCode.trim() || isJoining;
 
   return (
     <div style={{ padding: "24px" }}>
@@ -30,6 +39,7 @@ export default function StudentClassPage() {
         value={attendanceCode}
         onChange={(e) => setAttendanceCode(e.target.value)}
         placeholder="Enter attendance code"
+        disabled={isJoining}
         style={{
           marginTop: "16px",
           padding: "10px",
@@ -44,16 +54,18 @@ export default function StudentClassPage() {
       <div>
         <button
           onClick={handleJoin}
+          disabled={isDisabled}
           style={{
             marginTop: "16px",
             padding: "12px 20px",
-            backgroundColor: "#2563eb",
+            backgroundColor: isDisabled ? "#9ca3af" : "#2563eb",
             color: "white",
             borderRadius: "6px",
             fontSize: "16px",
+            cursor: isDisabled ? "not-allowed" : "pointer",
           }}
         >
-          Join
+          {isJoining ? "Joining..." : "Join"}
         </button>
       </div>
     </div>

@@ -5,7 +5,19 @@ import { useState } from "react";
 
 export default function ProfessorClassPage() {
   const { classCode } = useParams();
+
   const [showAttendancePanel, setShowAttendancePanel] = useState(false);
+  const [isActivated, setIsActivated] = useState(false);
+
+  const handleActivate = () => {
+    if (isActivated) return;
+    setIsActivated(true);
+  };
+
+  const handleCancel = () => {
+    setShowAttendancePanel(false);
+    setIsActivated(false);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -24,27 +36,35 @@ export default function ProfessorClassPage() {
         </button>
       )}
 
-      {/* Attendance Session Panel */}
+      {/* Attendance Panel */}
       {showAttendancePanel && (
         <div className="mt-6 bg-white rounded-lg shadow p-6 max-w-md">
           <h2 className="text-lg font-semibold text-black mb-4">
             Attendance Session
           </h2>
 
-          {/* Code Display */}
+          {/* Code + Activate */}
           <div className="flex items-center gap-3 mb-4">
             <div className="border px-4 py-2 rounded font-mono text-lg text-black">
               12345
             </div>
 
-            <button className="bg-green-600 text-white px-4 py-2 rounded">
-              Activate
+            <button
+              onClick={handleActivate}
+              disabled={isActivated}
+              className={`px-4 py-2 rounded text-white ${
+                isActivated
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-600"
+              }`}
+            >
+              {isActivated ? "Activated" : "Activate"}
             </button>
           </div>
 
-          {/* Cancel Button */}
+          {/* Cancel */}
           <button
-            onClick={() => setShowAttendancePanel(false)}
+            onClick={handleCancel}
             className="border px-4 py-2 rounded"
           >
             Cancel
@@ -52,7 +72,7 @@ export default function ProfessorClassPage() {
         </div>
       )}
 
-      {/* Attendance Records Section */}
+      {/* Attendance Records */}
       <div className="mt-10">
         <h2 className="text-xl font-semibold text-black mb-4">
           Attendance Records
