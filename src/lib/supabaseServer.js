@@ -1,13 +1,24 @@
 // src/lib/supabaseServer.js
-import { createClient } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 
-export function createSupabaseServerClient() {
-  return createClient(
+export async function createSupabaseServerClient() {
+  const cookieStore = await cookies(); // ✅ MUST await in Next 16
+
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
-      auth: {
-        persistSession: false,
+      cookies: {
+        get(name) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name, value, options) {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove(name, options) {
+          cookieStore.set({ name, value: "", ...options });
+        },
       },
     }
   );

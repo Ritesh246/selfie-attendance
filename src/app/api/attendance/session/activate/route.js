@@ -12,7 +12,7 @@ export async function POST(req) {
       );
     }
 
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
 
     // 1️⃣ Fetch current session
     const { data: session, error: fetchError } = await supabase

@@ -13,11 +13,11 @@ export async function GET(req) {
     if (!classCode) {
       return NextResponse.json(
         { error: "classCode is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
 
     const { data, error } = await supabase
       .from("classes")
@@ -26,10 +26,7 @@ export async function GET(req) {
       .single();
 
     if (error || !data) {
-      return NextResponse.json(
-        { error: "Class not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Class not found" }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -40,7 +37,7 @@ export async function GET(req) {
     console.error("🔥 API crash:", err);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

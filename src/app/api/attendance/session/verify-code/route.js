@@ -15,7 +15,7 @@ export async function POST(req) {
       );
     }
 
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
 
     // 🔥 AUTO-EXPIRE OLD SESSIONS (TIME-BASED CLEANUP)
     await supabase

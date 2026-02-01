@@ -1,24 +1,60 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "next/navigation";
-import { useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseBrowser";
 
 export default function StudentSelfiePage() {
-  const searchParams = useSearchParams();
-  const sessionId = searchParams.get("sessionId");
   const { classCode } = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const sessionId = searchParams.get("sessionId");
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
-  const [rollNumbers, setRollNumbers] = useState([]);
+  const [classId, setClassId] = useState(null);
+
+  // ✅ IMPORTANT: name must match backend
+  const [selfRollNumber, setSelfRollNumber] = useState("");
+  const [neighborRolls, setNeighborRolls] = useState([]);
   const [newRoll, setNewRoll] = useState("");
 
   const [capturedImage, setCapturedImage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
-  // ---------- Start Camera ----------
+  /* ---------- Guards ---------- */
+  useEffect(() => {
+    if (!sessionId) {
+      alert("Invalid session");
+      router.push("/student/classroom");
+    }
+  }, [sessionId, router]);
+
+  /* ---------- Fetch classId ---------- */
+  useEffect(() => {
+    const fetchClassId = async () => {
+      const { data, error } = await supabase
+        .from("classes")
+        .select("id")
+        .eq("code", classCode)
+        .single();
+
+      if (error || !data) {
+        alert("Invalid class");
+        router.push("/student/classroom");
+        return;
+      }
+
+      setClassId(data.id);
+    };
+
+    fetchClassId();
+  }, [classCode, router]);
+
+  /* ---------- Camera ---------- */
   useEffect(() => {
     startCamera();
     return () => stopCamera();
@@ -27,37 +63,33 @@ export default function StudentSelfiePage() {
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    } catch (err) {
-      console.error("Camera access denied", err);
+      if (videoRef.current) videoRef.current.srcObject = stream;
+    } catch {
+      alert("Camera access denied");
     }
   };
 
   const stopCamera = () => {
     if (videoRef.current?.srcObject) {
-      videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+      videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
     }
   };
 
-  // ---------- Roll Number Constraints (G1) ----------
-  const addRollNumber = () => {
-    if (!newRoll.trim()) return;
-    if (rollNumbers.length >= 2) return;
-    if (rollNumbers.includes(newRoll.trim())) return;
+  /* ---------- Neighbor rolls ---------- */
+  const addRoll = () => {
+    const roll = newRoll.trim();
+    if (!roll) return;
+    if (neighborRolls.length >= 2) return;
+    if (neighborRolls.includes(roll)) return;
 
-    setRollNumbers([...rollNumbers, newRoll.trim()]);
+    setNeighborRolls([...neighborRolls, roll]);
     setNewRoll("");
   };
 
-  const maxLimitReached = rollNumbers.length >= 2;
-
-  // ---------- Capture Frame (Improved G2) ----------
+  /* ---------- Capture selfie ---------- */
   const handleTakeSelfie = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-
     if (!video || !canvas) return;
 
     canvas.width = video.videoWidth;
@@ -66,46 +98,68 @@ export default function StudentSelfiePage() {
     const ctx = canvas.getContext("2d");
     ctx.drawImage(video, 0, 0);
 
-    const imageData = canvas.toDataURL("image/png");
-    setCapturedImage(imageData);
-
+    setCapturedImage(canvas.toDataURL("image/png"));
     stopCamera();
   };
 
-  // ---------- Retake ----------
   const handleRetake = () => {
     setCapturedImage(null);
     startCamera();
   };
 
-  // ---------- Submit (UI only) ----------
-  const handleSubmit = () => {
+  /* ---------- Submit ---------- */
+  const handleSubmit = async () => {
     if (isSubmitting) return;
 
-    setIsSubmitting(true);
+    if (!capturedImage) {
+      alert("Take selfie first");
+      return;
+    }
 
-    // Later: upload + face recognition
-    setTimeout(() => {
+    if (!selfRollNumber.trim()) {
+      alert("Enter your roll number");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const res = await fetch("/api/attendance/selfie/submit", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          selfRollNumber,   // ✅ EXACT name backend expects
+          neighborRolls,
+          imageBase64: capturedImage,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Submission failed");
+        return;
+      }
+
+      setSubmitted(true);
+      alert("✅ Attendance submitted successfully");
+    } catch (err) {
+      console.error(err);
+      alert("Server error");
+    } finally {
       setIsSubmitting(false);
-      alert("Selfie submitted (UI-only demo)");
-    }, 1500);
+    }
   };
 
-  if (!sessionId) {
-    return (
-      <div className="p-6 text-red-500">
-        Invalid or expired attendance session
-      </div>
-    );
-  }
-
+  /* ---------- UI ---------- */
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <h1 className="text-2xl font-bold text-black mb-4">
-        Selfie Time – {classCode.toUpperCase()}
+        Selfie – {classCode.toUpperCase()}
       </h1>
 
-      {/* Camera or Preview */}
       <div className="w-full max-w-md mb-4">
         {!capturedImage ? (
           <video
@@ -117,45 +171,51 @@ export default function StudentSelfiePage() {
         ) : (
           <img
             src={capturedImage}
-            alt="Captured selfie"
+            alt="Selfie"
             className="w-full h-64 rounded-lg object-cover"
           />
         )}
         <canvas ref={canvasRef} className="hidden" />
       </div>
 
-      {/* Roll Numbers */}
-      <div className="mb-4 max-w-md">
-        <div className="flex gap-2 mb-2">
+      {!submitted && (
+        <div className="mb-4 max-w-md">
+          {/* Self roll */}
           <input
-            value={newRoll}
-            onChange={(e) => setNewRoll(e.target.value)}
-            placeholder="Enter roll no."
-            disabled={maxLimitReached || capturedImage}
-            className="border px-3 py-2 rounded w-full text-black"
+            value={selfRollNumber}
+            onChange={(e) => setSelfRollNumber(e.target.value)}
+            placeholder="Enter your roll number"
+            disabled={capturedImage}
+            className="border px-3 py-2 rounded w-full text-black mb-3"
           />
-          <button
-            onClick={addRollNumber}
-            disabled={maxLimitReached || capturedImage}
-            className={`px-4 py-2 rounded text-white ${
-              maxLimitReached || capturedImage
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-600"
-            }`}
-          >
-            Add +
-          </button>
+
+          {/* Neighbor rolls */}
+          <div className="flex gap-2 mb-2">
+            <input
+              value={newRoll}
+              onChange={(e) => setNewRoll(e.target.value)}
+              placeholder="Enter neighbor roll no."
+              disabled={neighborRolls.length >= 2 || capturedImage}
+              className="border px-3 py-2 rounded w-full text-black"
+            />
+            <button
+              onClick={addRoll}
+              disabled={neighborRolls.length >= 2 || capturedImage}
+              className="px-4 py-2 rounded text-white bg-green-600"
+            >
+              Add
+            </button>
+          </div>
+
+          {neighborRolls.length > 0 && (
+            <p className="text-sm text-black">
+              Neighbors:{" "}
+              <span className="font-mono">{neighborRolls.join(", ")}</span>
+            </p>
+          )}
         </div>
+      )}
 
-        {rollNumbers.length > 0 && (
-          <p className="text-sm text-black">
-            Added roll numbers:{" "}
-            <span className="font-mono">{rollNumbers.join(", ")}</span>
-          </p>
-        )}
-      </div>
-
-      {/* Action Buttons */}
       {!capturedImage ? (
         <button
           onClick={handleTakeSelfie}
@@ -163,26 +223,28 @@ export default function StudentSelfiePage() {
         >
           Take Selfie
         </button>
-      ) : (
+      ) : !submitted ? (
         <div className="flex gap-3 max-w-md">
           <button
             onClick={handleRetake}
-            disabled={isSubmitting}
             className="border px-4 py-2 rounded w-full"
           >
             Retake
           </button>
-
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
             className={`px-4 py-2 rounded w-full text-white ${
-              isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600"
+              isSubmitting ? "bg-gray-400" : "bg-blue-600"
             }`}
           >
             {isSubmitting ? "Submitting..." : "Submit"}
           </button>
         </div>
+      ) : (
+        <p className="text-green-600 font-semibold">
+          Attendance submitted ✔
+        </p>
       )}
     </div>
   );

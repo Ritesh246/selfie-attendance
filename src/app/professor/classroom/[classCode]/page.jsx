@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseBrowser";
 
 export default function ProfessorClassPage() {
+  const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [recordsLoading, setRecordsLoading] = useState(false);
   const { classCode } = useParams();
 
   const [classId, setClassId] = useState(null);
@@ -36,6 +38,31 @@ export default function ProfessorClassPage() {
 
     fetchClassId();
   }, [classCode]);
+
+  useEffect(() => {
+    if (!classId) return;
+
+    const fetchRecords = async () => {
+      setRecordsLoading(true);
+
+      const { data, error } = await supabase
+        .from("attendance_records")
+        .select("roll_number, status, marked_at")
+        .eq("class_id", classId)
+        .order("marked_at", { ascending: false });
+
+      if (error) {
+        console.error(error);
+        setRecordsLoading(false);
+        return;
+      }
+
+      setAttendanceRecords(data);
+      setRecordsLoading(false);
+    };
+
+    fetchRecords();
+  }, [classId]);
 
   // 🔹 CREATE ATTENDANCE SESSION (FIXED)
   const handleCreateSession = async () => {
@@ -144,9 +171,7 @@ export default function ProfessorClassPage() {
               onClick={handleActivate}
               disabled={isActivated}
               className={`px-4 py-2 rounded text-white ${
-                isActivated
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-green-600"
+                isActivated ? "bg-gray-400 cursor-not-allowed" : "bg-green-600"
               }`}
             >
               {isActivated ? "Activated" : "Activate"}
@@ -163,7 +188,29 @@ export default function ProfessorClassPage() {
         <h2 className="text-xl font-semibold text-black mb-4">
           Attendance Records
         </h2>
-        <p className="text-gray-600">No attendance taken yet.</p>
+        {recordsLoading ? (
+          <p className="text-gray-600">Loading attendance...</p>
+        ) : attendanceRecords.length === 0 ? (
+          <p className="text-gray-600">No attendance taken yet.</p>
+        ) : (
+          <div className="space-y-4">
+            {attendanceRecords.map((record, index) => (
+              <div key={index} className="border rounded-md p-4 bg-white">
+                <div className="text-sm text-gray-500">
+                  Time: {new Date(record.marked_at).toLocaleString()}
+                </div>
+
+                <div className="mt-1 font-semibold text-black">
+                  Roll No: {record.roll_number}
+                </div>
+
+                <div className="text-sm text-gray-600">
+                  Status: {record.status}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

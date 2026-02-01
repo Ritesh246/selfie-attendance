@@ -11,13 +11,10 @@ export async function POST(req) {
     const { classId } = await req.json();
 
     if (!classId) {
-      return NextResponse.json(
-        { error: "classId required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "classId required" }, { status: 400 });
     }
 
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
 
     // 🔑 GET PROFESSOR ID FROM CLASS
     const { data: classData, error: classError } = await supabase
@@ -27,10 +24,7 @@ export async function POST(req) {
       .single();
 
     if (classError || !classData) {
-      return NextResponse.json(
-        { error: "Invalid class" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Invalid class" }, { status: 404 });
     }
 
     const attendanceCode = generateAttendanceCode();
@@ -52,7 +46,7 @@ export async function POST(req) {
       console.error("Insert error:", error);
       return NextResponse.json(
         { error: "Failed to create session" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -60,12 +54,11 @@ export async function POST(req) {
       sessionId: data.id,
       attendanceCode: data.attendance_code,
     });
-
   } catch (err) {
     console.error("Server crash:", err);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
