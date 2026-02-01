@@ -28,20 +28,21 @@ export async function POST(req) {
       );
     }
 
-    // 2️⃣ Deactivate ANY active session for this class
+    // 2️⃣ Deactivate ALL OTHER active sessions for this class
     const { error: deactivateError } = await supabase
       .from("attendance_sessions")
       .update({
         is_active: false,
-        status: "created", // ✅ ONLY ALLOWED VALUE
+        status: "created",
       })
       .eq("class_id", session.class_id)
+      .neq("id", sessionId)       // 🔒 IMPORTANT SAFETY
       .eq("is_active", true);
 
     if (deactivateError) {
       console.error("Deactivation error:", deactivateError);
       return NextResponse.json(
-        { error: "Failed to deactivate old session" },
+        { error: "Failed to deactivate old sessions" },
         { status: 500 }
       );
     }
@@ -65,7 +66,6 @@ export async function POST(req) {
     }
 
     return NextResponse.json({ success: true });
-
   } catch (err) {
     console.error("Activate route error:", err);
     return NextResponse.json(

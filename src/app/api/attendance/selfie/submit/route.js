@@ -17,7 +17,7 @@ export async function POST(req) {
     ) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -43,7 +43,7 @@ export async function POST(req) {
     if (sErr || !session || !session.is_active) {
       return NextResponse.json(
         { error: "Invalid or inactive session" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -53,7 +53,7 @@ export async function POST(req) {
     ) {
       return NextResponse.json(
         { error: "Selfie window expired" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -62,7 +62,7 @@ export async function POST(req) {
     // 📸 Upload selfie
     const buffer = Buffer.from(
       imageBase64.replace(/^data:image\/\w+;base64,/, ""),
-      "base64"
+      "base64",
     );
 
     const filePath = `${classId}/${sessionId}/${user.id}.png`;
@@ -78,7 +78,22 @@ export async function POST(req) {
       console.error(uploadError);
       return NextResponse.json(
         { error: "Failed to upload selfie" },
-        { status: 500 }
+        { status: 500 },
+      );
+    }
+
+    // 🚫 Prevent duplicate submission
+    const { data: existing } = await supabase
+      .from("attendance_records")
+      .select("id")
+      .eq("session_id", sessionId)
+      .eq("student_id", user.id)
+      .single();
+
+    if (existing) {
+      return NextResponse.json(
+        { error: "Attendance already submitted" },
+        { status: 409 },
       );
     }
 
@@ -110,7 +125,7 @@ export async function POST(req) {
       console.error(insertError);
       return NextResponse.json(
         { error: "Failed to save attendance" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 

@@ -130,7 +130,7 @@ export default function StudentSelfiePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId,
-          selfRollNumber,   // ✅ EXACT name backend expects
+          selfRollNumber, // ✅ EXACT name backend expects
           neighborRolls,
           imageBase64: capturedImage,
         }),
@@ -144,7 +144,11 @@ export default function StudentSelfiePage() {
       }
 
       setSubmitted(true);
-      alert("✅ Attendance submitted successfully");
+
+      // ⏳ short delay so user sees success
+      setTimeout(() => {
+        router.push(`/student/classroom/${classCode}`);
+      }, 2000);
     } catch (err) {
       console.error(err);
       alert("Server error");
@@ -242,9 +246,7 @@ export default function StudentSelfiePage() {
           </button>
         </div>
       ) : (
-        <p className="text-green-600 font-semibold">
-          Attendance submitted ✔
-        </p>
+        <p className="text-green-600 font-semibold">Attendance submitted ✔</p>
       )}
     </div>
   );
