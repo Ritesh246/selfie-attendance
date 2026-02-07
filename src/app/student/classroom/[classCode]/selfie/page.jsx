@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseBrowser";
 
 export default function StudentSelfiePage() {
   const { classCode } = useParams();
@@ -14,9 +13,6 @@ export default function StudentSelfiePage() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
-  const [classId, setClassId] = useState(null);
-
-  // ✅ IMPORTANT: name must match backend
   const [selfRollNumber, setSelfRollNumber] = useState("");
   const [neighborRolls, setNeighborRolls] = useState([]);
   const [newRoll, setNewRoll] = useState("");
@@ -32,27 +28,6 @@ export default function StudentSelfiePage() {
       router.push("/student/classroom");
     }
   }, [sessionId, router]);
-
-  /* ---------- Fetch classId ---------- */
-  useEffect(() => {
-    const fetchClassId = async () => {
-      const { data, error } = await supabase
-        .from("classes")
-        .select("id")
-        .eq("code", classCode)
-        .single();
-
-      if (error || !data) {
-        alert("Invalid class");
-        router.push("/student/classroom");
-        return;
-      }
-
-      setClassId(data.id);
-    };
-
-    fetchClassId();
-  }, [classCode, router]);
 
   /* ---------- Camera ---------- */
   useEffect(() => {
@@ -81,6 +56,7 @@ export default function StudentSelfiePage() {
     if (!roll) return;
     if (neighborRolls.length >= 2) return;
     if (neighborRolls.includes(roll)) return;
+    if (roll === selfRollNumber.trim()) return;
 
     setNeighborRolls([...neighborRolls, roll]);
     setNewRoll("");
@@ -126,11 +102,10 @@ export default function StudentSelfiePage() {
 
       const res = await fetch("/api/attendance/selfie/submit", {
         method: "POST",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId,
-          selfRollNumber, // ✅ EXACT name backend expects
+          selfRollNumber,
           neighborRolls,
           imageBase64: capturedImage,
         }),
@@ -145,12 +120,10 @@ export default function StudentSelfiePage() {
 
       setSubmitted(true);
 
-      // ⏳ short delay so user sees success
       setTimeout(() => {
         router.push(`/student/classroom/${classCode}`);
       }, 2000);
-    } catch (err) {
-      console.error(err);
+    } catch {
       alert("Server error");
     } finally {
       setIsSubmitting(false);
@@ -184,7 +157,6 @@ export default function StudentSelfiePage() {
 
       {!submitted && (
         <div className="mb-4 max-w-md">
-          {/* Self roll */}
           <input
             value={selfRollNumber}
             onChange={(e) => setSelfRollNumber(e.target.value)}
@@ -193,7 +165,6 @@ export default function StudentSelfiePage() {
             className="border px-3 py-2 rounded w-full text-black mb-3"
           />
 
-          {/* Neighbor rolls */}
           <div className="flex gap-2 mb-2">
             <input
               value={newRoll}
@@ -246,7 +217,9 @@ export default function StudentSelfiePage() {
           </button>
         </div>
       ) : (
-        <p className="text-green-600 font-semibold">Attendance submitted ✔</p>
+        <p className="text-green-600 font-semibold">
+          Attendance submitted ✔
+        </p>
       )}
     </div>
   );

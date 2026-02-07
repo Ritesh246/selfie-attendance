@@ -1,24 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseBrowser";
 
 export default function LoginPage() {
   const router = useRouter();
+  const redirectingRef = useRef(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 🔑 CENTRAL POST-LOGIN ROUTING LOGIC (Untouched)
+  /* ---------- Central post-login routing ---------- */
   const handlePostLoginRedirect = async () => {
+    if (redirectingRef.current) return;
+    redirectingRef.current = true;
+
     const { data: authData } = await supabase.auth.getUser();
     const user = authData?.user;
 
     if (!user) {
+      redirectingRef.current = false;
       setLoading(false);
       return;
     }
@@ -30,52 +35,46 @@ export default function LoginPage() {
       .single();
 
     if (!profile || !profile.role) {
-      router.push("/onboarding");
+      router.replace("/onboarding");
       return;
     }
 
     if (profile.role === "student" && !profile.face_registered) {
-      router.push("/student/register-face");
+      router.replace("/student/register-face");
       return;
     }
 
     if (profile.role === "student") {
-      router.push("/student/classroom");
+      router.replace("/student/classroom");
       return;
     }
 
     if (profile.role === "professor") {
-      router.push("/professor/classroom");
+      router.replace("/professor/classroom");
       return;
     }
 
-    router.push("/onboarding");
+    router.replace("/onboarding");
   };
 
-  // ⚡️ EFFECT: Handle the "Return" from Google
+  /* ---------- Auth state listener ---------- */
   useEffect(() => {
-    // 1. If we are returning from Google (flag is set), SHOW the message immediately
-    if (typeof window !== 'undefined' && localStorage.getItem("isGoogleLogin") === "true") {
-      setLoading(true);
-    }
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN") {
-        // 2. We are signed in, clear flag and keep showing message while we redirect
-        if (typeof window !== 'undefined') localStorage.removeItem("isGoogleLogin");
-        setLoading(true); 
-        handlePostLoginRedirect();
-      } else if (event === "SIGNED_OUT") {
-        setLoading(false);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event) => {
+        if (event === "SIGNED_IN") {
+          setLoading(true);
+          handlePostLoginRedirect();
+        }
       }
-    });
+    );
 
     return () => subscription.unsubscribe();
   }, []);
 
+  /* ---------- Email login ---------- */
   const handleEmailLogin = async () => {
     setError("");
-    setLoading(true); // Keep loading true for Email login (that's fine)
+    setLoading(true);
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -85,17 +84,12 @@ export default function LoginPage() {
     if (error) {
       setError(error.message);
       setLoading(false);
-      return;
     }
   };
 
+  /* ---------- Google login ---------- */
   const handleGoogleLogin = async () => {
     setError("");
-    // ❌ REMOVED: setLoading(true) is gone. 
-    // This ensures no message appears when you click the button.
-    
-    // Set flag so we show the message ONLY when you come back
-    if (typeof window !== 'undefined') localStorage.setItem("isGoogleLogin", "true");
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -104,19 +98,15 @@ export default function LoginPage() {
       },
     });
 
-    if (error) {
-      if (typeof window !== 'undefined') localStorage.removeItem("isGoogleLogin");
-      setError(error.message);
-    }
+    if (error) setError(error.message);
   };
 
-  // 🛑 REDIRECTING SCREEN (Only shows when returning from Google)
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-neutral-950 px-4">
-        <div className="text-white text-lg animate-pulse">
+      <main className="min-h-screen flex items-center justify-center bg-neutral-950">
+        <p className="text-white text-lg animate-pulse">
           Redirecting to Classroom...
-        </div>
+        </p>
       </main>
     );
   }
@@ -124,9 +114,7 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-neutral-950 px-4">
       <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-6">
-        <h1 className="text-2xl font-bold text-neutral-900 text-center mb-6">
-          Login
-        </h1>
+        <h1 className="text-2xl font-bold text-center mb-6">Login</h1>
 
         <div className="space-y-4">
           <input
@@ -134,7 +122,7 @@ export default function LoginPage() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full border border-neutral-300 px-3 py-2 rounded text-neutral-800"
+            className="w-full border px-3 py-2 rounded text-black"
           />
 
           <input
@@ -142,7 +130,7 @@ export default function LoginPage() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full border border-neutral-300 px-3 py-2 rounded text-neutral-800"
+            className="w-full border px-3 py-2 rounded text-black"
           />
 
           {error && (
@@ -151,10 +139,9 @@ export default function LoginPage() {
 
           <button
             onClick={handleEmailLogin}
-            disabled={loading}
-            className="w-full bg-black text-white py-2 rounded disabled:opacity-60"
+            className="w-full bg-black text-white py-2 rounded"
           >
-            {loading ? "Logging in..." : "Login with Email"}
+            Login with Email
           </button>
 
           <div className="flex items-center gap-3 my-2">
@@ -165,17 +152,16 @@ export default function LoginPage() {
 
           <button
             onClick={handleGoogleLogin}
-            disabled={loading}
-            className="w-full gap-1 flex justify-center items-center border border-neutral-300 py-2 rounded text-neutral-800 hover:bg-neutral-100 transition "
+            className="w-full flex justify-center items-center gap-2 border py-2 rounded"
           >
-            <img className="w-8 h-8" src="/google.png" alt="google" />
+            <img src="/google.png" className="w-8 h-8" alt="google" />
             Continue with Google
           </button>
         </div>
 
-        <p className="text-sm text-center mt-6 text-neutral-600">
+        <p className="text-sm text-center mt-6">
           Don’t have an account?{" "}
-          <Link href="/auth/register" className="font-semibold text-black">
+          <Link href="/auth/register" className="font-semibold">
             Register
           </Link>
         </p>

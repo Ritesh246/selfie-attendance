@@ -3,6 +3,8 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseBrowser";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 export default function ProfessorClassPage() {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
@@ -138,6 +140,62 @@ export default function ProfessorClassPage() {
     setAttendanceCode(null);
   };
 
+  const downloadExcel = () => {
+    if (attendanceRecords.length === 0) {
+      alert("No attendance data available");
+      return;
+    }
+
+    const formattedData = attendanceRecords.map((record) => ({
+      "Roll No": record.roll_number,
+      "Date & Time": new Date(record.marked_at).toLocaleString(),
+      Status: record.status,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const file = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(
+      file,
+      `attendance_${classCode}_${new Date().toISOString().slice(0, 10)}.xlsx`,
+    );
+  };
+
+  const handleDownloadExcel = () => {
+    if (attendanceRecords.length === 0) {
+      alert("No attendance records to download");
+      return;
+    }
+
+    const formattedData = attendanceRecords.map((record) => ({
+      "Roll No": record.roll_number,
+      Status: record.status,
+      "Date & Time": new Date(record.marked_at).toLocaleString(),
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
+
+    const fileName = `attendance_${classCode}_${new Date()
+      .toISOString()
+      .slice(0, 10)}.xlsx`;
+
+    XLSX.writeFile(workbook, fileName);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <h1 className="text-2xl font-bold text-black mb-6">
@@ -185,9 +243,21 @@ export default function ProfessorClassPage() {
       )}
 
       <div className="mt-10">
-        <h2 className="text-xl font-semibold text-black mb-4">
-          Attendance Records
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-black">
+            Attendance Records
+          </h2>
+
+          {attendanceRecords.length > 0 && (
+            <button
+              onClick={handleDownloadExcel}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+            >
+              Download Excel
+            </button>
+          )}
+        </div>
+
         {recordsLoading ? (
           <p className="text-gray-600">Loading attendance...</p>
         ) : attendanceRecords.length === 0 ? (
