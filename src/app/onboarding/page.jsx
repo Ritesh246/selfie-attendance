@@ -9,6 +9,7 @@ export default function OnboardingPage() {
 
   const [user, setUser] = useState(null);
   const [role, setRole] = useState("");
+  const [fullName, setFullName] = useState(""); // ✅ NEW
   const [rollNo, setRollNo] = useState("");
   const [department, setDepartment] = useState("");
   const [batch, setBatch] = useState("");
@@ -16,10 +17,10 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Fetch logged-in user
+  // 🔐 Fetch logged-in user
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) {
+      if (!data?.user) {
         router.push("/auth/login");
       } else {
         setUser(data.user);
@@ -33,7 +34,10 @@ export default function OnboardingPage() {
       return;
     }
 
-    if (role === "student" && (!rollNo || !department || !batch)) {
+    if (
+      role === "student" &&
+      (!fullName || !rollNo || !department || !batch)
+    ) {
       setError("Please fill all student details");
       return;
     }
@@ -44,6 +48,7 @@ export default function OnboardingPage() {
     const profileData = {
       id: user.id,
       role,
+      full_name: role === "student" ? fullName : null, // ✅ STORED HERE
       roll_no: role === "student" ? rollNo : null,
       department: role === "student" ? department : null,
       batch: role === "student" ? batch : null,
@@ -60,17 +65,15 @@ export default function OnboardingPage() {
       return;
     }
 
-    // Redirect based on role (dashboards will be built later)
+    // 🔁 Role-based routing
     if (role === "professor") {
-      router.push("/professor/classroom");
+      router.replace("/professor/classroom"); // safer
     } else {
-      router.push("/student/register-face");
+      router.replace("/student/register-face"); // safer
     }
   };
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-neutral-950 px-4">
@@ -91,9 +94,17 @@ export default function OnboardingPage() {
             <option value="professor">Professor</option>
           </select>
 
-          {/* Student-only fields */}
+          {/* 🎓 Student-only fields */}
           {role === "student" && (
             <>
+              <input
+                type="text"
+                placeholder="Full Name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full border border-neutral-300 px-3 py-2 rounded text-neutral-900"
+              />
+
               <input
                 type="text"
                 placeholder="Roll Number"

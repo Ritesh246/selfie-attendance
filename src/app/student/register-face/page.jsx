@@ -18,15 +18,31 @@ export default function RegisterFacePage() {
   const [error, setError] = useState("");
   const [cameraReady, setCameraReady] = useState(false);
 
-  /* ---------------- AUTH CHECK ---------------- */
+  /* ---------------- AUTH + FACE GUARD ---------------- */
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    const checkUserAndFace = async () => {
+      const { data } = await supabase.auth.getUser();
+
       if (!data?.user) {
-        router.push("/auth/login");
-      } else {
-        setUser(data.user);
+        router.replace("/auth/login");
+        return;
       }
-    });
+
+      setUser(data.user);
+
+      // 🔒 Guard: if face already registered, NEVER allow this page
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("face_registered")
+        .eq("id", data.user.id)
+        .single();
+
+      if (profile?.face_registered) {
+        router.replace("/student/classroom");
+      }
+    };
+
+    checkUserAndFace();
   }, [router]);
 
   /* ---------------- START CAMERA ---------------- */
@@ -90,91 +106,88 @@ export default function RegisterFacePage() {
     canvas.height = video.videoHeight;
 
     const ctx = canvas.getContext("2d");
-    
-    // Draw the image from the video onto the canvas
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     setCaptured(true);
   };
 
-  /* ---------------- RETAKE PHOTO (Optional) ---------------- */
+  /* ---------------- RETAKE PHOTO ---------------- */
   const retakePhoto = () => {
     setCaptured(false);
   };
 
   /* ---------------- SUBMIT PHOTO ---------------- */
   const submitPhoto = async () => {
-  if (!user || !canvasRef.current) return;
+    if (!user || !canvasRef.current) return;
 
-  setLoading(true);
-  setError("");
+    setLoading(true);
+    setError("");
 
-  canvasRef.current.toBlob(async (blob) => {
-    if (!blob) {
-      setError("Failed to capture image");
+    canvasRef.current.toBlob(async (blob) => {
+      if (!blob) {
+        setError("Failed to capture image");
+        setLoading(false);
+        return;
+      }
+
+      const filePath = `students/${user.id}.jpg`;
+
+      // 1️⃣ Upload image
+      const { error: uploadError } = await supabase.storage
+        .from("face-images")
+        .upload(filePath, blob, {
+          upsert: true,
+          contentType: "image/jpeg",
+        });
+
+      if (uploadError) {
+        setError(uploadError.message);
+        setLoading(false);
+        return;
+      }
+
+      // 2️⃣ Update profile
+      const { error: dbError } = await supabase
+        .from("profiles")
+        .update({
+          face_image_path: filePath,
+          face_registered: true,
+        })
+        .eq("id", user.id);
+
+      if (dbError) {
+        setError(dbError.message);
+        setLoading(false);
+        return;
+      }
+
+      // 3️⃣ Fetch role
+      const { data: profile, error: roleError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
       setLoading(false);
-      return;
-    }
 
-    const filePath = `students/${user.id}.jpg`;
+      if (roleError) {
+        setError(roleError.message);
+        return;
+      }
 
-    // 1. Upload Image to Storage
-    const { error: uploadError } = await supabase.storage
-      .from("face-images")
-      .upload(filePath, blob, {
-        upsert: true,
-        contentType: "image/jpeg",
-      });
+      // Stop camera
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+      }
 
-    if (uploadError) {
-      setError(uploadError.message);
-      setLoading(false);
-      return;
-    }
-
-    // 2. Update User Profile
-    const { error: dbError } = await supabase
-      .from("profiles")
-      .update({
-        face_image_path: filePath,
-        face_registered: true,
-      })
-      .eq("id", user.id);
-
-    if (dbError) {
-      setError(dbError.message);
-      setLoading(false);
-      return;
-    }
-
-    // 3. Fetch role for routing
-    const { data: profile, error: roleError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    setLoading(false);
-
-    if (roleError) {
-      setError(roleError.message);
-      return;
-    }
-
-    // Stop camera streams
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-    }
-
-    // 4. Role-based routing
-    if (profile.role === "professor") {
-      router.push("/professor/classroom");
-    } else {
-      router.push("/student/classroom");
-    }
-  }, "image/jpeg");
-};
-
+      // ✅ IMPORTANT: replace, NOT push
+      if (profile.role === "professor") {
+        router.replace("/professor/classroom");
+      } else {
+        router.replace("/student/classroom");
+      }
+    }, "image/jpeg");
+  };
 
   if (!user) return null;
 
@@ -189,8 +202,6 @@ export default function RegisterFacePage() {
           This will be used for attendance verification
         </p>
 
-        {/* --- FIXED SECTION START --- */}
-        {/* We keep both elements in the DOM, but hide one using CSS */}
         <div className="relative w-full mb-4">
           <video
             ref={videoRef}
@@ -204,7 +215,6 @@ export default function RegisterFacePage() {
             className={`w-full rounded ${!captured ? "hidden" : "block"}`}
           />
         </div>
-        {/* --- FIXED SECTION END --- */}
 
         {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
 

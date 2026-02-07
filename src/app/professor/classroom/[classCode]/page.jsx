@@ -4,23 +4,22 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseBrowser";
 import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
 
 export default function ProfessorClassPage() {
-  const [attendanceRecords, setAttendanceRecords] = useState([]);
-  const [recordsLoading, setRecordsLoading] = useState(false);
   const { classCode } = useParams();
 
   const [classId, setClassId] = useState(null);
+  const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [rollNameMap, setRollNameMap] = useState({});
+  const [recordsLoading, setRecordsLoading] = useState(false);
 
   const [showAttendancePanel, setShowAttendancePanel] = useState(false);
   const [isActivated, setIsActivated] = useState(false);
-
   const [sessionId, setSessionId] = useState(null);
   const [attendanceCode, setAttendanceCode] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // 🔹 FETCH CLASS UUID USING CLASS CODE
+  /* ---------------- FETCH CLASS ID ---------------- */
   useEffect(() => {
     const fetchClassId = async () => {
       const { data, error } = await supabase
@@ -41,32 +40,72 @@ export default function ProfessorClassPage() {
     fetchClassId();
   }, [classCode]);
 
+  /* ---------------- FETCH ATTENDANCE + NAMES ---------------- */
+  const fetchRecords = async () => {
+    if (!classId) return;
+
+    setRecordsLoading(true);
+
+    // 1️⃣ Fetch attendance records
+    const { data: records, error } = await supabase
+      .from("attendance_records")
+      .select("roll_number, status, marked_at")
+      .eq("class_id", classId)
+      .order("marked_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      setRecordsLoading(false);
+      return;
+    }
+
+    setAttendanceRecords(records);
+
+    // 2️⃣ Extract unique roll numbers (STRING)
+    const uniqueRolls = [
+      ...new Set(records.map((r) => String(r.roll_number))),
+    ];
+
+    if (uniqueRolls.length === 0) {
+      setRollNameMap({});
+      setRecordsLoading(false);
+      return;
+    }
+
+    // 3️⃣ Fetch names from profiles
+    const { data: profiles, error: profileError } = await supabase
+      .from("profiles")
+      .select("roll_no, full_name")
+      .in("roll_no", uniqueRolls.map(Number));
+
+    if (profileError) {
+      console.error(profileError);
+      setRecordsLoading(false);
+      return;
+    }
+
+    // 4️⃣ Build roll → name map
+    const map = {};
+    profiles.forEach((p) => {
+      map[String(p.roll_no)] = p.full_name;
+    });
+
+    setRollNameMap(map);
+    setRecordsLoading(false);
+  };
+
+  /* ---------------- AUTO REFRESH ---------------- */
   useEffect(() => {
     if (!classId) return;
 
-    const fetchRecords = async () => {
-      setRecordsLoading(true);
+    fetchRecords(); // initial load
 
-      const { data, error } = await supabase
-        .from("attendance_records")
-        .select("roll_number, status, marked_at")
-        .eq("class_id", classId)
-        .order("marked_at", { ascending: false });
+    const interval = setInterval(fetchRecords, 5000); // refresh every 5 sec
 
-      if (error) {
-        console.error(error);
-        setRecordsLoading(false);
-        return;
-      }
-
-      setAttendanceRecords(data);
-      setRecordsLoading(false);
-    };
-
-    fetchRecords();
+    return () => clearInterval(interval);
   }, [classId]);
 
-  // 🔹 CREATE ATTENDANCE SESSION (FIXED)
+  /* ---------------- CREATE SESSION ---------------- */
   const handleCreateSession = async () => {
     if (!classId) {
       alert("Class not loaded yet");
@@ -79,9 +118,7 @@ export default function ProfessorClassPage() {
       const res = await fetch("/api/attendance/session/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          classId: classId, // ✅ FIXED (UUID, not classCode)
-        }),
+        body: JSON.stringify({ classId }),
       });
 
       const data = await res.json();
@@ -102,7 +139,7 @@ export default function ProfessorClassPage() {
     }
   };
 
-  // 🔹 ACTIVATE SESSION
+  /* ---------------- ACTIVATE SESSION ---------------- */
   const handleActivate = async () => {
     if (!sessionId || isActivated) return;
 
@@ -122,7 +159,6 @@ export default function ProfessorClassPage() {
 
       setIsActivated(true);
 
-      // UI auto-hide after 10 sec (DB handled separately)
       setTimeout(() => {
         setIsActivated(false);
         setShowAttendancePanel(false);
@@ -140,38 +176,7 @@ export default function ProfessorClassPage() {
     setAttendanceCode(null);
   };
 
-  const downloadExcel = () => {
-    if (attendanceRecords.length === 0) {
-      alert("No attendance data available");
-      return;
-    }
-
-    const formattedData = attendanceRecords.map((record) => ({
-      "Roll No": record.roll_number,
-      "Date & Time": new Date(record.marked_at).toLocaleString(),
-      Status: record.status,
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(formattedData);
-    const workbook = XLSX.utils.book_new();
-
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
-
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
-
-    const file = new Blob([excelBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-
-    saveAs(
-      file,
-      `attendance_${classCode}_${new Date().toISOString().slice(0, 10)}.xlsx`,
-    );
-  };
-
+  /* ---------------- EXCEL DOWNLOAD ---------------- */
   const handleDownloadExcel = () => {
     if (attendanceRecords.length === 0) {
       alert("No attendance records to download");
@@ -180,6 +185,7 @@ export default function ProfessorClassPage() {
 
     const formattedData = attendanceRecords.map((record) => ({
       "Roll No": record.roll_number,
+      // Name: rollNameMap[String(record.roll_number)] || "Unknown",
       Status: record.status,
       "Date & Time": new Date(record.marked_at).toLocaleString(),
     }));
@@ -189,13 +195,13 @@ export default function ProfessorClassPage() {
 
     XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
 
-    const fileName = `attendance_${classCode}_${new Date()
-      .toISOString()
-      .slice(0, 10)}.xlsx`;
-
-    XLSX.writeFile(workbook, fileName);
+    XLSX.writeFile(
+      workbook,
+      `attendance_${classCode}_${new Date().toISOString().slice(0, 10)}.xlsx`
+    );
   };
 
+  /* ---------------- UI ---------------- */
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <h1 className="text-2xl font-bold text-black mb-6">
@@ -207,7 +213,7 @@ export default function ProfessorClassPage() {
           onClick={handleCreateSession}
           disabled={loading}
           className={`px-6 py-3 rounded-md text-white ${
-            loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600"
+            loading ? "bg-gray-400" : "bg-blue-600"
           }`}
         >
           {loading ? "Creating session..." : "Take Attendance"}
@@ -229,7 +235,7 @@ export default function ProfessorClassPage() {
               onClick={handleActivate}
               disabled={isActivated}
               className={`px-4 py-2 rounded text-white ${
-                isActivated ? "bg-gray-400 cursor-not-allowed" : "bg-green-600"
+                isActivated ? "bg-gray-400" : "bg-green-600"
               }`}
             >
               {isActivated ? "Activated" : "Activate"}
@@ -251,7 +257,7 @@ export default function ProfessorClassPage() {
           {attendanceRecords.length > 0 && (
             <button
               onClick={handleDownloadExcel}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              className="px-4 py-2 bg-green-600 text-white rounded-md"
             >
               Download Excel
             </button>
@@ -271,7 +277,9 @@ export default function ProfessorClassPage() {
                 </div>
 
                 <div className="mt-1 font-semibold text-black">
-                  Roll No: {record.roll_number}
+                  Roll No: {record.roll_number} 
+                  {/* —{" "} */}
+                  {/* {rollNameMap[String(record.roll_number)] || "Unknown"} */}
                 </div>
 
                 <div className="text-sm text-gray-600">

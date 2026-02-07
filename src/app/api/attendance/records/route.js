@@ -22,24 +22,31 @@ export async function GET(req) {
     } = await supabase.auth.getUser();
 
     if (!user || authError) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
-    // 📊 Fetch attendance records
+    /**
+     * 📊 Fetch attendance with name resolved via:
+     * attendance_records → class_students → profiles
+     * (NO schema change required)
+     */
     const { data, error } = await supabase
       .from("attendance_records")
       .select(`
-        id,
         roll_number,
-        created_at,
-        attendance_sessions (
-          id,
-          attendance_code,
-          code_activated_at
+        status,
+        marked_at,
+        class_students!inner (
+          profiles (
+            full_name
+          )
         )
       `)
       .eq("class_id", classId)
-      .order("created_at", { ascending: false });
+      .order("marked_at", { ascending: true });
 
     if (error) {
       console.error(error);
@@ -49,9 +56,17 @@ export async function GET(req) {
       );
     }
 
-    return NextResponse.json({ records: data });
+    // 🧾 Format for Excel
+    const records = data.map((row) => ({
+      roll_number: row.roll_number,
+      name: row.class_students.profiles.full_name,
+      status: row.status,
+      date_time: new Date(row.marked_at).toLocaleString("en-IN"),
+    }));
+
+    return NextResponse.json({ records });
   } catch (err) {
-    console.error(err);
+    console.error("Attendance export error:", err);
     return NextResponse.json(
       { error: "Server error" },
       { status: 500 }

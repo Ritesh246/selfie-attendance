@@ -121,7 +121,7 @@ export default function StudentSelfiePage() {
       setSubmitted(true);
 
       setTimeout(() => {
-        router.push(`/student/classroom/${classCode}`);
+        router.replace(`/student/classroom/`);
       }, 2000);
     } catch {
       alert("Server error");
