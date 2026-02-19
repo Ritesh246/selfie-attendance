@@ -192,59 +192,74 @@ export default function RegisterFacePage() {
   if (!user) return null;
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-neutral-950 px-4">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-6 text-center">
-        <h1 className="text-2xl font-bold text-neutral-900 mb-2">
+  <main className="min-h-screen flex items-center justify-center bg-[#8C92D8] px-4 py-12">
+    <div className="w-full max-w-md bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-8 text-center">
+
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-extrabold text-[#5A4FCF]">
           Register Your Face
         </h1>
-
-        <p className="text-sm text-neutral-600 mb-4">
-          This will be used for attendance verification
+        <p className="text-sm text-gray-500 mt-2">
+          This will be used for secure attendance verification
         </p>
-
-        <div className="relative w-full mb-4">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className={`w-full rounded ${captured ? "hidden" : "block"}`}
-          />
-          <canvas
-            ref={canvasRef}
-            className={`w-full rounded ${!captured ? "hidden" : "block"}`}
-          />
-        </div>
-
-        {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
-
-        {!captured ? (
-          <button
-            onClick={capturePhoto}
-            disabled={!cameraReady}
-            className="w-full bg-black text-white py-2 rounded disabled:opacity-50"
-          >
-            {cameraReady ? "Capture Face" : "Starting Camera…"}
-          </button>
-        ) : (
-          <div className="flex gap-2">
-            <button
-              onClick={retakePhoto}
-              disabled={loading}
-              className="w-1/2 bg-gray-200 text-black py-2 rounded"
-            >
-              Retake
-            </button>
-            <button
-              onClick={submitPhoto}
-              disabled={loading}
-              className="w-1/2 bg-black text-white py-2 rounded disabled:opacity-60"
-            >
-              {loading ? "Uploading..." : "Submit"}
-            </button>
-          </div>
-        )}
       </div>
-    </main>
-  );
+
+      {/* Camera Frame */}
+      <div className="relative w-full mb-6 rounded-xl overflow-hidden border-4 border-[#E6E8FF] shadow-inner bg-gray-100">
+
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className={`w-full ${captured ? "hidden" : "block"}`}
+        />
+
+        <canvas
+          ref={canvasRef}
+          className={`w-full ${!captured ? "hidden" : "block"}`}
+        />
+      </div>
+
+      {/* Error */}
+      {error && (
+        <p className="text-sm text-red-600 mb-4 font-medium">
+          {error}
+        </p>
+      )}
+
+      {/* Buttons */}
+      {!captured ? (
+        <button
+          onClick={capturePhoto}
+          disabled={!cameraReady}
+          className="w-full bg-[#5A4FCF] text-white py-3 rounded-xl font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {cameraReady ? "Capture Face" : "Starting Camera…"}
+        </button>
+      ) : (
+        <div className="flex gap-3">
+          <button
+            onClick={retakePhoto}
+            disabled={loading}
+            className="w-1/2 bg-gray-200 text-gray-800 py-3 rounded-xl font-medium hover:bg-gray-300 transition disabled:opacity-60"
+          >
+            Retake
+          </button>
+
+          <button
+            onClick={submitPhoto}
+            disabled={loading}
+            className="w-1/2 bg-[#5A4FCF] text-white py-3 rounded-xl font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {loading ? "Uploading..." : "Submit"}
+          </button>
+        </div>
+      )}
+
+    </div>
+  </main>
+);
+
 }

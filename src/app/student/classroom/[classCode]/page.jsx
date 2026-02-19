@@ -90,41 +90,46 @@ export default function StudentClassPage() {
      UI
   -------------------------------------------------- */
   return (
-    <div style={{ padding: "24px" }}>
-      <h1 style={{ fontSize: "28px", fontWeight: "bold" }}>
-        Student – {classCode.toUpperCase()} Class
+  <div className="min-h-screen bg-[#8C92D8] flex items-center justify-center px-4 py-12">
+
+    <div className="w-full max-w-md bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-8 text-center">
+
+      {/* Header */}
+      <h1 className="text-3xl font-extrabold text-[#5A4FCF] mb-2">
+        {classCode.toUpperCase()} Class
       </h1>
 
-      <p style={{ marginTop: "10px", color: "#aaa" }}>
-        Enter the attendance code shared by your professor.
+      <p className="text-sm text-gray-500 mb-8">
+        Enter the attendance code shared by your professor
       </p>
 
+      {/* Input */}
       <input
         value={attendanceCode}
         onChange={(e) => setAttendanceCode(e.target.value)}
         placeholder="Enter attendance code"
         disabled={loading}
-        style={{
-          marginTop: "16px",
-          padding: "10px",
-          width: "260px",
-          border: "1px solid #ccc",
-          borderRadius: "6px",
-          fontSize: "16px",
-        }}
+        className="w-full px-4 py-3 rounded-xl border border-gray-300 text-center text-lg tracking-widest font-mono text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#5A4FCF] focus:border-transparent transition-all mb-5 disabled:bg-gray-100"
       />
 
-      <div>
-        <button
-          onClick={handleVerifyCode}
-          disabled={loading || !classId}
-          className="bg-blue-600 mt-3 text-white px-4 py-2 rounded disabled:opacity-50"
-        >
-          {loading ? "Verifying..." : "Join"}
-        </button>
+      {/* Button */}
+      <button
+        onClick={handleVerifyCode}
+        disabled={loading || !classId}
+        className="w-full bg-[#5A4FCF] text-white py-3 rounded-xl font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        {loading ? "Verifying..." : "Join Attendance"}
+      </button>
 
-        {error && <p className="text-red-500 mt-2">{error}</p>}
-      </div>
+      {/* Error */}
+      {error && (
+        <p className="text-sm text-red-600 mt-4 font-medium">
+          {error}
+        </p>
+      )}
+
     </div>
-  );
+  </div>
+);
+
 }

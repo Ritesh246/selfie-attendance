@@ -17,14 +17,14 @@ export async function POST(req) {
     ) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (neighborRolls.length > MAX_NEIGHBORS) {
       return NextResponse.json(
         { error: "Maximum 2 neighbors allowed" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -35,7 +35,7 @@ export async function POST(req) {
     if (new Set(allRolls).size !== allRolls.length) {
       return NextResponse.json(
         { error: "Duplicate roll numbers not allowed" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -58,7 +58,7 @@ export async function POST(req) {
     if (!session || !session.is_active) {
       return NextResponse.json(
         { error: "Invalid or inactive session" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -68,23 +68,21 @@ export async function POST(req) {
     ) {
       return NextResponse.json(
         { error: "Selfie window expired" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     const buffer = Buffer.from(
       imageBase64.replace(/^data:image\/\w+;base64,/, ""),
-      "base64"
+      "base64",
     );
 
     const filePath = `${session.class_id}/${sessionId}/${user.id}.png`;
 
-    await supabase.storage
-      .from("attendance-selfies")
-      .upload(filePath, buffer, {
-        contentType: "image/png",
-        upsert: true,
-      });
+    await supabase.storage.from("attendance-selfies").upload(filePath, buffer, {
+      contentType: "image/png",
+      upsert: true,
+    });
 
     const { data: publicData } = supabase.storage
       .from("attendance-selfies")
@@ -101,10 +99,32 @@ export async function POST(req) {
           selfie_image_url: publicData.publicUrl,
           students: allRolls.map((r) => ({ roll: Number(r) })),
         }),
-      }
+      },
     );
 
-    const result = await pythonRes.json();
+    const text = await pythonRes.text();
+
+    console.log("Python status:", pythonRes.status);
+    console.log("Python raw response:", text);
+
+    if (!pythonRes.ok) {
+      return NextResponse.json(
+        { error: "Face verification failed" },
+        { status: 500 },
+      );
+    }
+
+    let result;
+
+    try {
+      result = text ? JSON.parse(text) : {};
+    } catch (err) {
+      console.error("Invalid JSON from Python:", text);
+      return NextResponse.json(
+        { error: "Face verification server error" },
+        { status: 500 },
+      );
+    }
 
     return NextResponse.json({
       success: true,

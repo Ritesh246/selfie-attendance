@@ -2,29 +2,53 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main className="min-h-screen flex flex-col">
+    <main className="min-h-screen flex flex-col bg-[#8C92D8] text-white">
+
       {/* Navbar */}
-      <nav className="flex justify-between items-center px-8 py-4 border-b">
-        <h1 className="text-xl font-bold">Selfie Attendance</h1>
+      <nav className="w-full px-6 sm:px-10 py-5 flex justify-between items-center">
+        <h1 className="flex justify-center items-center text-2xl sm:text-3xl font-extrabold tracking-tight">
+          <img className="w-20 h-20" src="comedy.png" alt="comedy" />
+          <span className="font-mono">GrinIn</span>
+        </h1>
 
         <Link href="/auth/login">
-          <button className="px-4 py-2 bg-black text-white rounded">
+          <button className="p-2 ml-2 bg-white text-[#5A4FCF] font-semibold rounded-xl shadow-md hover:shadow-lg hover:scale-[1.03] transition-all duration-300">
             Get Started
           </button>
         </Link>
       </nav>
 
       {/* Hero Section */}
-      <section className="flex flex-1 flex-col items-center justify-center text-center px-6">
-        <h2 className="text-4xl font-bold mb-4">
-          Smart Selfie Attendance System
-        </h2>
+      <section>
+        <section className="flex flex-col justify-center items-center text-center px-6 sm:px-10 py-16 sm:py-20 md:py-28">
 
-        <p className="text-gray-600 max-w-xl">
-          A fast, secure and classroom-friendly attendance system designed to
-          avoid errors, cheating, and crowd selfies.
-        </p>
+          {/* Headline Stack */}
+          <div className="space-y-1 leading-tight">
+
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-semibold">
+              <span className="font-extrabold">G</span><span className="text-4xl font-extrabold">E</span><span className="text-4xl font-extrabold">N</span><span className="text-6xl font-extrabold italic">z</span> 
+            </h2>
+
+            <h3 className="text-xl font-mono sm:text-2xl md:text-3xl font-extrabold italic ">
+              vala
+            </h3>
+
+            <h1 className="text-3xl text-[#5A4FCF] sm:text-3xl md:text-5xl font-black tracking-tight font-mono">
+              attendance
+            </h1>
+
+          </div>
+          
+          {/* CTA */}
+          <Link href="/auth/login">
+            <button className="mt-10 px-8 py-3 bg-white text-[#5A4FCF] font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.03] transition-all duration-300">
+              Start Taking Attendance
+            </button>
+          </Link>
+
+        </section>
       </section>
+      
     </main>
   );
 }

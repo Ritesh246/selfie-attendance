@@ -76,82 +76,95 @@ export default function OnboardingPage() {
   if (!user) return null;
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-neutral-950 px-4">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-6">
-        <h1 className="text-2xl font-bold text-center text-neutral-900 mb-6">
+  <main className="min-h-screen flex items-center justify-center bg-[#8C92D8] px-4 py-12">
+    <div className="w-full max-w-lg bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-8">
+
+      {/* Header */}
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-extrabold text-[#5A4FCF]">
           Complete Your Profile
         </h1>
-
-        <div className="space-y-4">
-          {/* Role selection */}
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="w-full border border-neutral-300 px-3 py-2 rounded text-neutral-900"
-          >
-            <option value="">Select Role</option>
-            <option value="student">Student</option>
-            <option value="professor">Professor</option>
-          </select>
-
-          {/* 🎓 Student-only fields */}
-          {role === "student" && (
-            <>
-              <input
-                type="text"
-                placeholder="Full Name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full border border-neutral-300 px-3 py-2 rounded text-neutral-900"
-              />
-
-              <input
-                type="text"
-                placeholder="Roll Number"
-                value={rollNo}
-                onChange={(e) => setRollNo(e.target.value)}
-                className="w-full border border-neutral-300 px-3 py-2 rounded text-neutral-900"
-              />
-
-              <select
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                className="w-full border border-neutral-300 px-3 py-2 rounded text-neutral-900"
-              >
-                <option value="">Select Department</option>
-                <option value="Computer">Computer</option>
-                <option value="IT">IT</option>
-                <option value="AIDS">AIDS</option>
-              </select>
-
-              <select
-                value={batch}
-                onChange={(e) => setBatch(e.target.value)}
-                className="w-full border border-neutral-300 px-3 py-2 rounded text-neutral-900"
-              >
-                <option value="">Select Batch</option>
-                <option value="A">A</option>
-                <option value="B">B</option>
-                <option value="C">C</option>
-              </select>
-            </>
-          )}
-
-          {error && (
-            <p className="text-sm text-red-600 text-center">
-              {error}
-            </p>
-          )}
-
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="w-full bg-black text-white py-2 rounded hover:bg-neutral-800 transition disabled:opacity-60"
-          >
-            {loading ? "Saving..." : "Continue"}
-          </button>
-        </div>
+        <p className="text-sm text-gray-500 mt-2">
+          Just a few details to set up your GrinIn account
+        </p>
       </div>
-    </main>
-  );
+
+      <div className="space-y-5">
+
+        {/* Role Selection */}
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          className="w-full px-4 py-3 rounded-xl border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#5A4FCF] focus:border-transparent transition-all"
+        >
+          <option value="">Select Role</option>
+          <option value="student">Student</option>
+          <option value="professor">Professor</option>
+        </select>
+
+        {/* Student Fields */}
+        {role === "student" && (
+          <div className="space-y-4 pt-2 border-t border-gray-200">
+
+            <input
+              type="text"
+              placeholder="Full Name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#5A4FCF] focus:border-transparent transition-all"
+            />
+
+            <input
+              type="text"
+              placeholder="Roll Number"
+              value={rollNo}
+              onChange={(e) => setRollNo(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#5A4FCF] focus:border-transparent transition-all"
+            />
+
+            <select
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#5A4FCF] focus:border-transparent transition-all"
+            >
+              <option value="">Select Department</option>
+              <option value="Computer">Computer</option>
+              <option value="IT">IT</option>
+              <option value="AIDS">AIDS</option>
+            </select>
+
+            <select
+              value={batch}
+              onChange={(e) => setBatch(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-gray-300 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#5A4FCF] focus:border-transparent transition-all"
+            >
+              <option value="">Select Batch</option>
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+            </select>
+          </div>
+        )}
+
+        {/* Error */}
+        {error && (
+          <p className="text-sm text-red-600 text-center font-medium">
+            {error}
+          </p>
+        )}
+
+        {/* Continue Button */}
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="w-full bg-[#5A4FCF] text-white py-3 rounded-xl font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {loading ? "Saving..." : "Continue"}
+        </button>
+
+      </div>
+    </div>
+  </main>
+);
+
 }

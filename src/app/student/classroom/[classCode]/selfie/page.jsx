@@ -132,95 +132,117 @@ export default function StudentSelfiePage() {
 
   /* ---------- UI ---------- */
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-2xl font-bold text-black mb-4">
-        Selfie – {classCode.toUpperCase()}
+  <div className="min-h-screen bg-[#8C92D8] flex items-center justify-center px-4 py-10">
+
+    <div className="w-full max-w-md bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-6 text-center">
+
+      {/* Header */}
+      <h1 className="text-2xl font-extrabold text-[#5A4FCF] mb-2">
+        {classCode.toUpperCase()} Attendance
       </h1>
 
-      <div className="w-full max-w-md mb-4">
+      <p className="text-sm text-gray-500 mb-6">
+        Capture your selfie to mark attendance
+      </p>
+
+      {/* Camera Frame */}
+      <div className="w-full mb-6 rounded-xl overflow-hidden border-4 border-[#E6E8FF] bg-black shadow-inner">
         {!capturedImage ? (
           <video
             ref={videoRef}
             autoPlay
             playsInline
-            className="w-full h-64 bg-black rounded-lg object-cover"
+            className="w-full h-64 object-cover"
           />
         ) : (
           <img
             src={capturedImage}
             alt="Selfie"
-            className="w-full h-64 rounded-lg object-cover"
+            className="w-full h-64 object-cover"
           />
         )}
         <canvas ref={canvasRef} className="hidden" />
       </div>
 
       {!submitted && (
-        <div className="mb-4 max-w-md">
+        <div className="mb-6 space-y-4">
+
+          {/* Self Roll */}
           <input
             value={selfRollNumber}
             onChange={(e) => setSelfRollNumber(e.target.value)}
             placeholder="Enter your roll number"
             disabled={capturedImage}
-            className="border px-3 py-2 rounded w-full text-black mb-3"
+            className="w-full px-4 py-3 rounded-xl border border-gray-300 text-center font-mono text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#5A4FCF] focus:border-transparent transition disabled:bg-gray-100"
           />
 
-          <div className="flex gap-2 mb-2">
+          {/* Neighbor Rolls */}
+          <div className="flex gap-2">
             <input
               value={newRoll}
               onChange={(e) => setNewRoll(e.target.value)}
-              placeholder="Enter neighbor roll no."
+              placeholder="Neighbor roll no."
               disabled={neighborRolls.length >= 2 || capturedImage}
-              className="border px-3 py-2 rounded w-full text-black"
+              className="flex-1 px-4 py-3 rounded-xl border border-gray-300 font-mono text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#5A4FCF] focus:border-transparent transition disabled:bg-gray-100"
             />
             <button
               onClick={addRoll}
               disabled={neighborRolls.length >= 2 || capturedImage}
-              className="px-4 py-2 rounded text-white bg-green-600"
+              className="px-4 py-3 rounded-xl bg-[#5A4FCF] text-white font-medium shadow-md hover:shadow-lg hover:scale-[1.02] transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Add
             </button>
           </div>
 
           {neighborRolls.length > 0 && (
-            <p className="text-sm text-black">
+            <p className="text-sm text-gray-600">
               Neighbors:{" "}
-              <span className="font-mono">{neighborRolls.join(", ")}</span>
+              <span className="font-mono text-[#5A4FCF]">
+                {neighborRolls.join(", ")}
+              </span>
             </p>
           )}
+
         </div>
       )}
 
+      {/* Buttons */}
       {!capturedImage ? (
         <button
           onClick={handleTakeSelfie}
-          className="bg-blue-600 text-white px-6 py-3 rounded-md w-full max-w-md"
+          className="w-full bg-[#5A4FCF] text-white py-3 rounded-xl font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300"
         >
           Take Selfie
         </button>
       ) : !submitted ? (
-        <div className="flex gap-3 max-w-md">
+        <div className="flex gap-3">
           <button
             onClick={handleRetake}
-            className="border px-4 py-2 rounded w-full"
+            className="w-1/2 border border-gray-300 py-3 rounded-xl font-medium hover:bg-gray-100 transition"
           >
             Retake
           </button>
+
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className={`px-4 py-2 rounded w-full text-white ${
-              isSubmitting ? "bg-gray-400" : "bg-blue-600"
+            className={`w-1/2 py-3 rounded-xl font-semibold text-white transition-all ${
+              isSubmitting
+                ? "bg-gray-400"
+                : "bg-[#5A4FCF] hover:shadow-lg hover:scale-[1.02]"
             }`}
           >
             {isSubmitting ? "Submitting..." : "Submit"}
           </button>
         </div>
       ) : (
-        <p className="text-green-600 font-semibold">
+        <p className="text-green-600 font-semibold text-lg">
           Attendance submitted ✔
         </p>
       )}
+
     </div>
-  );
+  </div>
+);
+
 }

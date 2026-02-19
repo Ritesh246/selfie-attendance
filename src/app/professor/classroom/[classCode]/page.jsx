@@ -203,93 +203,115 @@ export default function ProfessorClassPage() {
 
   /* ---------------- UI ---------------- */
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-2xl font-bold text-black mb-6">
-        Professor – {classCode.toUpperCase()} Class
+  <div className="min-h-screen bg-[#8C92D8] px-4 md:px-8 py-8">
+
+    {/* Header */}
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+      <h1 className="text-3xl font-bold text-white">
+        {classCode.toUpperCase()} Class
       </h1>
 
       {!showAttendancePanel && (
         <button
           onClick={handleCreateSession}
           disabled={loading}
-          className={`px-6 py-3 rounded-md text-white ${
-            loading ? "bg-gray-400" : "bg-blue-600"
+          className={`px-6 py-3 rounded-xl font-semibold shadow-md transition-all ${
+            loading
+              ? "bg-gray-400 text-white"
+              : "bg-white text-[#5A4FCF] hover:shadow-lg hover:scale-[1.03]"
           }`}
         >
           {loading ? "Creating session..." : "Take Attendance"}
         </button>
       )}
+    </div>
 
-      {showAttendancePanel && (
-        <div className="mt-6 bg-white rounded-lg shadow p-6 max-w-md">
-          <h2 className="text-lg font-semibold text-black mb-4">
-            Attendance Session
-          </h2>
+    {/* Attendance Panel */}
+    {showAttendancePanel && (
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-lg mb-10">
 
-          <div className="flex items-center gap-3 mb-4">
-            <div className="border px-4 py-2 rounded font-mono text-lg text-black">
-              {attendanceCode || "-----"}
-            </div>
+        <h2 className="text-xl font-bold text-[#5A4FCF] mb-6">
+          Attendance Session
+        </h2>
 
-            <button
-              onClick={handleActivate}
-              disabled={isActivated}
-              className={`px-4 py-2 rounded text-white ${
-                isActivated ? "bg-gray-400" : "bg-green-600"
-              }`}
-            >
-              {isActivated ? "Activated" : "Activate"}
-            </button>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+
+          <div className="flex-1 border-2 border-[#E6E8FF] px-6 py-4 rounded-xl font-mono text-2xl text-center tracking-widest text-gray-800">
+            {attendanceCode || "-----"}
           </div>
 
-          <button onClick={handleCancel} className="border px-4 py-2 rounded">
-            Cancel
+          <button
+            onClick={handleActivate}
+            disabled={isActivated}
+            className={`px-5 py-3 rounded-xl font-semibold transition-all ${
+              isActivated
+                ? "bg-gray-400 text-white"
+                : "bg-[#5A4FCF] text-white hover:shadow-lg hover:scale-[1.03]"
+            }`}
+          >
+            {isActivated ? "Activated" : "Activate"}
           </button>
         </div>
-      )}
 
-      <div className="mt-10">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-black">
-            Attendance Records
-          </h2>
+        <button
+          onClick={handleCancel}
+          className="px-4 py-2 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+        >
+          Cancel
+        </button>
+      </div>
+    )}
 
-          {attendanceRecords.length > 0 && (
-            <button
-              onClick={handleDownloadExcel}
-              className="px-4 py-2 bg-green-600 text-white rounded-md"
-            >
-              Download Excel
-            </button>
-          )}
-        </div>
+    {/* Records Section */}
+    <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl p-6 md:p-8">
 
-        {recordsLoading ? (
-          <p className="text-gray-600">Loading attendance...</p>
-        ) : attendanceRecords.length === 0 ? (
-          <p className="text-gray-600">No attendance taken yet.</p>
-        ) : (
-          <div className="space-y-4">
-            {attendanceRecords.map((record, index) => (
-              <div key={index} className="border rounded-md p-4 bg-white">
-                <div className="text-sm text-gray-500">
-                  Time: {new Date(record.marked_at).toLocaleString()}
-                </div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <h2 className="text-2xl font-bold text-[#5A4FCF]">
+          Attendance Records
+        </h2>
 
-                <div className="mt-1 font-semibold text-black">
-                  Roll No: {record.roll_number} 
-                  {/* —{" "} */}
-                  {/* {rollNameMap[String(record.roll_number)] || "Unknown"} */}
-                </div>
-
-                <div className="text-sm text-gray-600">
-                  Status: {record.status}
-                </div>
-              </div>
-            ))}
-          </div>
+        {attendanceRecords.length > 0 && (
+          <button
+            onClick={handleDownloadExcel}
+            className="px-5 py-2.5 bg-[#5A4FCF] text-white rounded-xl font-medium shadow-md hover:shadow-lg hover:scale-[1.03] transition-all"
+          >
+            Download Excel
+          </button>
         )}
       </div>
+
+      {recordsLoading ? (
+        <p className="text-gray-600">Loading attendance...</p>
+      ) : attendanceRecords.length === 0 ? (
+        <p className="text-gray-600">
+          No attendance taken yet.
+        </p>
+      ) : (
+        <div className="space-y-4">
+
+          {attendanceRecords.map((record, index) => (
+            <div
+              key={index}
+              className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition bg-white"
+            >
+              <div className="text-xs text-gray-500 mb-1">
+                {new Date(record.marked_at).toLocaleString()}
+              </div>
+
+              <div className="font-semibold text-gray-800">
+                Roll No: {record.roll_number}
+              </div>
+
+              <div className="text-sm text-gray-600 mt-1">
+                Status: {record.status}
+              </div>
+            </div>
+          ))}
+
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
+
 }
