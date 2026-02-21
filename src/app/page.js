@@ -26,7 +26,8 @@ export default function Home() {
           <div className="space-y-1 leading-tight">
 
             <h2 className="text-4xl sm:text-5xl md:text-6xl font-semibold">
-              <span className="font-extrabold">G</span><span className="text-4xl font-extrabold">E</span><span className="text-4xl font-extrabold">N</span><span className="text-6xl font-extrabold italic">z</span> 
+             <img src="./genz.png" alt="genz" />
+              {/* <span className="font-extrabold">G</span><span className="text-4xl font-extrabold">E</span><span className="text-4xl font-extrabold">N</span><span className="text-6xl font-extrabold italic">z</span>  */}
             </h2>
 
             <h3 className="text-xl font-mono sm:text-2xl md:text-3xl font-extrabold italic ">
