@@ -8,6 +8,7 @@ export default function StudentClassPage() {
   const router = useRouter();
  
   const [classId, setClassId] = useState(null);
+  const [className, setClassName] = useState("");
   const [attendanceCode, setAttendanceCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -30,6 +31,7 @@ export default function StudentClassPage() {
         }
 
         setClassId(data.classId);
+        setClassName(data.className);
       } catch (err) {
         console.error(err);
         setError("Failed to load class");
@@ -96,7 +98,7 @@ export default function StudentClassPage() {
 
       {/* Header */}
       <h1 className="text-3xl font-extrabold text-[#5A4FCF] mb-2">
-        {classCode.toUpperCase()} Class
+        {className.toUpperCase()} Class
       </h1>
 
       <p className="text-sm text-gray-500 mb-8">

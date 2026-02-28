@@ -5,9 +5,9 @@ export default function Home() {
     <main className="min-h-screen flex flex-col bg-[#8C92D8] text-white">
 
       {/* Navbar */}
-      <nav className="w-full px-6 sm:px-10 py-5 flex justify-between items-center">
-        <h1 className="flex justify-center items-center text-2xl sm:text-3xl font-extrabold tracking-tight">
-          <img className="w-20 h-20" src="comedy.png" alt="comedy" />
+      <nav className="w-full px-4 sm:px-10 py-5 flex justify-between items-center">
+        <h1 className="flex justify-center items-center text-2xl sm:text-4xl font-extrabold tracking-tight">
+          <img className="w-17 h-17" src="comedy.png" alt="comedy" />
           <span className="font-mono">GrinIn</span>
         </h1>
 
@@ -31,11 +31,11 @@ export default function Home() {
             </h2>
 
             <h3 className="text-xl font-mono sm:text-2xl md:text-3xl font-extrabold italic ">
-              vala
+              style
             </h3>
 
             <h1 className="text-3xl text-[#5A4FCF] sm:text-3xl md:text-5xl font-black tracking-tight font-mono">
-              attendance
+              Attendance
             </h1>
 
           </div>

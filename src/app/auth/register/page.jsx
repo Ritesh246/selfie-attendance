@@ -60,7 +60,7 @@ export default function RegisterPage() {
       {/* Brand Header */}
       <div className="text-center mb-8">
         <h1 className="text-3xl font-extrabold text-[#5A4FCF]">
-          Join GrinIn
+          Join <span className="text-4xl text-violet-950 font-mono">GrinIn</span> 
         </h1>
         <p className="text-sm text-gray-500 mt-2">
           Create your GenZ vala attendance account

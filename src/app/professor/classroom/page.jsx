@@ -95,7 +95,7 @@ export default function ProfessorClassroomPage() {
   // ---------- LOADING GUARD ----------
   if (checkingAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex text-3xl text-blue-900 font-semibold items-center bg-[#8C92D8] justify-center">
         Checking access...
       </div>
     );
@@ -106,16 +106,16 @@ export default function ProfessorClassroomPage() {
   <div className="min-h-screen bg-[#8C92D8]">
 
     {/* Top Bar */}
-    <div className="flex items-center justify-between px-6 py-5 bg-white/95 backdrop-blur-md shadow-md">
+    <div className="flex items-center justify-between px-6 mx-1.5 py-3 rounded-4xl translate-y-2 bg-white/95 backdrop-blur-md shadow-md">
       <h1 className="text-2xl font-bold text-[#5A4FCF]">
-        Professor Classroom
+        Professor
       </h1>
 
       <button
         onClick={openModal}
-        className="bg-[#5A4FCF] text-white px-5 py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg hover:scale-[1.03] transition-all duration-300"
+        className="bg-[#5A4FCF] text-white px-5 py-2.5 rounded-3xl font-medium shadow-md hover:shadow-lg hover:scale-[1.03] transition-all duration-300"
       >
-        + Create Class
+       Create Class
       </button>
     </div>
 

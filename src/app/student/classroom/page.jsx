@@ -10,7 +10,7 @@ export default function StudentClassroomPage() {
   // ---------- STATE ----------
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [classes, setClasses] = useState([]);
-
+  const [className, setClassName] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [classCode, setClassCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -113,7 +113,7 @@ export default function StudentClassroomPage() {
   // ---------- LOADING ----------
   if (checkingAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex text-3xl text-blue-900 font-semibold items-center bg-[#8C92D8] justify-center">
         Checking access...
       </div>
     );
@@ -124,16 +124,16 @@ export default function StudentClassroomPage() {
   <div className="min-h-screen bg-[#8C92D8]">
 
     {/* Top Bar */}
-    <div className="flex items-center justify-between px-6 py-5 bg-white/95 backdrop-blur-md shadow-md">
+    <div className="flex items-center justify-between px-6 mx-1.5 py-3 rounded-4xl translate-y-2 bg-white/95 backdrop-blur-md shadow-md">
       <h1 className="text-2xl font-bold text-[#5A4FCF]">
-        Student Classroom
+        Student
       </h1>
 
       <button
         onClick={openModal}
-        className="bg-[#5A4FCF] text-white px-5 py-2.5 rounded-xl font-medium shadow-md hover:shadow-lg hover:scale-[1.03] transition-all duration-300"
+        className="bg-[#5A4FCF] text-white px-3 py-2 rounded-2xl font-medium shadow-md hover:shadow-lg hover:scale-[1.03] transition-all duration-300"
       >
-        + Join Class
+        Join Class
       </button>
     </div>
 

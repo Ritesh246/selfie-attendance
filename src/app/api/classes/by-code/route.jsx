@@ -21,7 +21,7 @@ export async function GET(req) {
 
     const { data, error } = await supabase
       .from("classes")
-      .select("id, code")
+      .select("id, code, name")
       .eq("code", classCode)
       .single();
 
@@ -32,6 +32,7 @@ export async function GET(req) {
     return NextResponse.json({
       classId: data.id,
       classCode: data.code,
+      className: data.name
     });
   } catch (err) {
     console.error("🔥 API crash:", err);

@@ -132,117 +132,111 @@ export default function StudentSelfiePage() {
 
   /* ---------- UI ---------- */
   return (
-  <div className="min-h-screen bg-[#8C92D8] flex items-center justify-center px-4 py-10">
+    <div className="min-h-screen bg-[#8C92D8] flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-md bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-6 text-center">
+        {/* Header */}
+        <h1 className="text-2xl font-extrabold text-[#5A4FCF] mb-2">
+          {classCode.toUpperCase()} Attendance
+        </h1>
 
-    <div className="w-full max-w-md bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-6 text-center">
+        <p className="text-sm text-gray-500 mb-6">
+          Capture your selfie to mark attendance
+        </p>
 
-      {/* Header */}
-      <h1 className="text-2xl font-extrabold text-[#5A4FCF] mb-2">
-        {classCode.toUpperCase()} Attendance
-      </h1>
-
-      <p className="text-sm text-gray-500 mb-6">
-        Capture your selfie to mark attendance
-      </p>
-
-      {/* Camera Frame */}
-      <div className="w-full mb-6 rounded-xl overflow-hidden border-4 border-[#E6E8FF] bg-black shadow-inner">
-        {!capturedImage ? (
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            className="w-full h-64 object-cover"
-          />
-        ) : (
-          <img
-            src={capturedImage}
-            alt="Selfie"
-            className="w-full h-64 object-cover"
-          />
-        )}
-        <canvas ref={canvasRef} className="hidden" />
-      </div>
-
-      {!submitted && (
-        <div className="mb-6 space-y-4">
-
-          {/* Self Roll */}
-          <input
-            value={selfRollNumber}
-            onChange={(e) => setSelfRollNumber(e.target.value)}
-            placeholder="Enter your roll number"
-            disabled={capturedImage}
-            className="w-full px-4 py-3 rounded-xl border border-gray-300 text-center font-mono text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#5A4FCF] focus:border-transparent transition disabled:bg-gray-100"
-          />
-
-          {/* Neighbor Rolls */}
-          <div className="flex gap-2">
-            <input
-              value={newRoll}
-              onChange={(e) => setNewRoll(e.target.value)}
-              placeholder="Neighbor roll no."
-              disabled={neighborRolls.length >= 2 || capturedImage}
-              className="flex-1 px-4 py-3 rounded-xl border border-gray-300 font-mono text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#5A4FCF] focus:border-transparent transition disabled:bg-gray-100"
+        {/* Camera Frame */}
+        <div className="w-full mb-6 rounded-xl overflow-hidden border-4 border-[#E6E8FF] bg-black shadow-inner">
+          {!capturedImage ? (
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              className="w-full h-64 object-cover"
             />
+          ) : (
+            <img
+              src={capturedImage}
+              alt="Selfie"
+              className="w-full h-64 object-cover"
+            />
+          )}
+          <canvas ref={canvasRef} className="hidden" />
+        </div>
+
+        {!submitted && (
+          <div className="mb-6 space-y-4">
+            {/* Self Roll */}
+            <input
+              value={selfRollNumber}
+              onChange={(e) => setSelfRollNumber(e.target.value)}
+              placeholder="Enter your roll number"
+              disabled={capturedImage}
+              className="w-full px-4 py-3 rounded-xl border border-gray-300 text-center font-mono text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#5A4FCF] focus:border-transparent transition disabled:bg-gray-100"
+            />
+
+            {/* Neighbor Rolls */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                value={newRoll}
+                onChange={(e) => setNewRoll(e.target.value)}
+                placeholder="Neighbor roll no."
+                disabled={neighborRolls.length >= 2 || capturedImage}
+                className="flex-1 px-4 py-3 rounded-xl border border-gray-300 font-mono text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#5A4FCF] focus:border-transparent transition disabled:bg-gray-100"
+              />
+              <button
+                onClick={addRoll}
+                disabled={neighborRolls.length >= 2 || capturedImage}
+                className="w-full sm:w-auto px-4 py-3 rounded-xl bg-[#5A4FCF] text-white font-medium shadow-md hover:shadow-lg hover:scale-[1.02] transition disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                Add
+              </button>
+            </div>
+
+            {neighborRolls.length > 0 && (
+              <p className="text-sm text-gray-600">
+                Neighbors:{" "}
+                <span className="font-mono text-[#5A4FCF]">
+                  {neighborRolls.join(", ")}
+                </span>
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Buttons */}
+        {!capturedImage ? (
+          <button
+            onClick={handleTakeSelfie}
+            className="w-full bg-[#5A4FCF] text-white py-3 rounded-xl font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300"
+          >
+            Take Selfie
+          </button>
+        ) : !submitted ? (
+          <div className="flex gap-3">
             <button
-              onClick={addRoll}
-              disabled={neighborRolls.length >= 2 || capturedImage}
-              className="px-4 py-3 rounded-xl bg-[#5A4FCF] text-white font-medium shadow-md hover:shadow-lg hover:scale-[1.02] transition disabled:opacity-60 disabled:cursor-not-allowed"
+              onClick={handleRetake}
+              className="w-1/2 border border-gray-300 py-3 rounded-xl font-medium hover:bg-gray-100 transition"
             >
-              Add
+              Retake
+            </button>
+
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className={`w-1/2 py-3 rounded-xl font-semibold text-white transition-all ${
+                isSubmitting
+                  ? "bg-gray-400"
+                  : "bg-[#5A4FCF] hover:shadow-lg hover:scale-[1.02]"
+              }`}
+            >
+              {isSubmitting ? "Submitting..." : "Submit"}
             </button>
           </div>
-
-          {neighborRolls.length > 0 && (
-            <p className="text-sm text-gray-600">
-              Neighbors:{" "}
-              <span className="font-mono text-[#5A4FCF]">
-                {neighborRolls.join(", ")}
-              </span>
-            </p>
-          )}
-
-        </div>
-      )}
-
-      {/* Buttons */}
-      {!capturedImage ? (
-        <button
-          onClick={handleTakeSelfie}
-          className="w-full bg-[#5A4FCF] text-white py-3 rounded-xl font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300"
-        >
-          Take Selfie
-        </button>
-      ) : !submitted ? (
-        <div className="flex gap-3">
-          <button
-            onClick={handleRetake}
-            className="w-1/2 border border-gray-300 py-3 rounded-xl font-medium hover:bg-gray-100 transition"
-          >
-            Retake
-          </button>
-
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className={`w-1/2 py-3 rounded-xl font-semibold text-white transition-all ${
-              isSubmitting
-                ? "bg-gray-400"
-                : "bg-[#5A4FCF] hover:shadow-lg hover:scale-[1.02]"
-            }`}
-          >
-            {isSubmitting ? "Submitting..." : "Submit"}
-          </button>
-        </div>
-      ) : (
-        <p className="text-green-600 font-semibold text-lg">
-          Attendance submitted ✔
-        </p>
-      )}
-
+        ) : (
+          <p className="text-green-600 font-semibold text-lg">
+            Attendance submitted ✔
+          </p>
+        )}
+      </div>
     </div>
-  </div>
-);
-
+  );
 }
