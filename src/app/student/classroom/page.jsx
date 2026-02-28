@@ -137,11 +137,15 @@ export default function StudentClassroomPage() {
       </button>
     </div>
 
+    <div className="text-white text-4xl font-semibold font-mono flex items-center justify-center pt-10">
+      Classroom
+    </div>
+
     {/* Classes Section */}
     <div className="p-6 md:p-10">
 
       {classes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center mt-24 text-center">
+        <div className="flex flex-col items-center justify-center mt-23 text-center">
           <h2 className="text-2xl font-semibold text-white mb-2">
             No classes joined yet
           </h2>

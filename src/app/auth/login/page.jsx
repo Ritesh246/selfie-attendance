@@ -101,28 +101,18 @@ export default function LoginPage() {
     if (error) setError(error.message);
   };
 
-  if (loading) {
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-neutral-950">
-        <p className="text-white text-lg animate-pulse">
-          Redirecting to Classroom...
-        </p>
-      </main>
-    );
-  }
-
-  if (loading) {
-  return (
-    <main className="min-h-screen flex items-center justify-center bg-[#8C92D8]">
-      <div className="text-center space-y-3">
-        <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto" />
-        <p className="text-white text-lg font-medium">
-          Redirecting to Classroom...
-        </p>
-      </div>
-    </main>
-  );
-}
+//   if (loading) {
+//   return (
+//     <main className="min-h-screen flex items-center justify-center bg-[#8C92D8]">
+//       <div className="text-center space-y-3">
+//         <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+//         <p className="text-white text-lg font-medium">
+//           Redirecting to Classroom...
+//         </p>
+//       </div>
+//     </main>
+//   );
+// }
 
 return (
   <main className="min-h-screen flex items-center justify-center bg-[#8C92D8] px-4 py-12">

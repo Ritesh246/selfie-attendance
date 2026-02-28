@@ -119,8 +119,12 @@ export default function ProfessorClassroomPage() {
       </button>
     </div>
 
+    <div className="text-white text-4xl font-semibold font-mono flex items-center justify-center pt-10">
+      Classroom
+    </div>
+
     {/* Classes Section */}
-    <div className="p-6 md:p-10">
+    <div className="p-6 py-4 md:p-10 ">
 
       {classes.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-24 text-center">
