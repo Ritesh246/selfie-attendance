@@ -135,7 +135,7 @@ export default function StudentSelfiePage() {
       <div className="w-full max-w-md bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-6 text-center">
         {/* Header */}
         <h1 className="text-2xl font-extrabold text-[#5A4FCF] mb-2">
-          {classCode.toUpperCase()} Attendance
+          {/* {classCode.toUpperCase()}  */}Attendance Time
         </h1>
 
         <p className="text-sm text-gray-500 mb-6">

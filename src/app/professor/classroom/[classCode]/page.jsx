@@ -235,7 +235,7 @@ export default function ProfessorClassPage() {
     {/* Header */}
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
       <h1 className="text-3xl font-bold text-white">
-        {classCode.toUpperCase()} Class
+        Generate 10 sec code
       </h1>
 
       {!showAttendancePanel && (
