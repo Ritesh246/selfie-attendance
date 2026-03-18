@@ -113,7 +113,7 @@ export default function StudentSelfiePage() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Submission failed");
+        alert(data.backendError || data.error || "Submission failed");
         return;
       }
 
