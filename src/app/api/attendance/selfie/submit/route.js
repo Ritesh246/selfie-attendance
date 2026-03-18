@@ -91,7 +91,7 @@ export async function POST(req) {
     console.log("FACE_VERIFY_URL:", process.env.FACE_VERIFY_URL);
 
     const pythonRes = await fetch(
-      `${process.env.FACE_VERIFY_URL}/verify-face`,
+      `${process.env.FACE_VERIFY_URL.replace(/\/$/, "")}/verify-face`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
