@@ -110,11 +110,14 @@ export async function POST(req) {
     console.log("Python response text:", text);
 
     if (!pythonRes.ok) {
-      return NextResponse.json(
-        { error: "Face verification failed", details: text },
-        { status: 500 },
-      );
-    }
+  return NextResponse.json(
+    {
+      error: "Face verification failed",
+      backendError: text, // 🔥 THIS LINE IS KEY
+    },
+    { status: 500 },
+  );
+}
 
     let result;
 
