@@ -88,6 +88,8 @@ export async function POST(req) {
       .from("attendance-selfies")
       .getPublicUrl(filePath);
 
+    console.log("FACE_VERIFY_URL:", process.env.FACE_VERIFY_URL);
+
     const pythonRes = await fetch(
       `${process.env.FACE_VERIFY_URL}/verify-face`,
       {
@@ -105,11 +107,11 @@ export async function POST(req) {
     const text = await pythonRes.text();
 
     console.log("Python status:", pythonRes.status);
-    console.log("Python raw response:", text);
+    console.log("Python response text:", text);
 
     if (!pythonRes.ok) {
       return NextResponse.json(
-        { error: "Face verification failed" },
+        { error: "Face verification failed", details: text },
         { status: 500 },
       );
     }
