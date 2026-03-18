@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 
 export default function StudentSelfiePage() {
-  const { className } = useParams();
+  const { classCode } = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
   const sessionId = searchParams.get("sessionId");
@@ -135,7 +135,7 @@ export default function StudentSelfiePage() {
       <div className="w-full max-w-md bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-6 text-center">
         {/* Header */}
         <h1 className="text-2xl font-extrabold text-[#5A4FCF] mb-2">
-          {className.toUpperCase()} Attendance
+          {classCode.toUpperCase()} Attendance
         </h1>
 
         <p className="text-sm text-gray-500 mb-6">
