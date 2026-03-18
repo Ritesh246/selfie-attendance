@@ -98,7 +98,7 @@ export default function StudentClassPage() {
 
       {/* Header */}
       <h1 className="text-3xl font-extrabold text-[#5A4FCF] mb-2">
-        {className.toUpperCase()} Class
+        {className} Class
       </h1>
 
       <p className="text-sm text-gray-500 mb-8">
