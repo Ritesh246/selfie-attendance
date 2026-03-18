@@ -177,29 +177,56 @@ export default function ProfessorClassPage() {
   };
 
   /* ---------------- EXCEL DOWNLOAD ---------------- */
+  // const handleDownloadExcel = () => {
+  //   if (attendanceRecords.length === 0) {
+  //     alert("No attendance records to download");
+  //     return;
+  //   }
+
+  //   const formattedData = attendanceRecords.map((record) => ({
+  //     "Roll No": record.roll_number,
+  //     // Name: rollNameMap[String(record.roll_number)] || "Unknown",
+  //     Status: record.status,
+  //     "Date & Time": new Date(record.marked_at).toLocaleString(),
+  //   }));
+
+  //   const worksheet = XLSX.utils.json_to_sheet(formattedData);
+  //   const workbook = XLSX.utils.book_new();
+
+  //   XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
+
+  //   XLSX.writeFile(
+  //     workbook,
+  //     `attendance_${classCode}_${new Date().toISOString().slice(0, 10)}.xlsx`
+  //   );
+  // };
+
   const handleDownloadExcel = () => {
-    if (attendanceRecords.length === 0) {
-      alert("No attendance records to download");
-      return;
-    }
+  if (attendanceRecords.length === 0) {
+    alert("No attendance records to download");
+    return;
+  }
 
-    const formattedData = attendanceRecords.map((record) => ({
-      "Roll No": record.roll_number,
-      // Name: rollNameMap[String(record.roll_number)] || "Unknown",
-      Status: record.status,
-      "Date & Time": new Date(record.marked_at).toLocaleString(),
-    }));
+  const sortedRecords = [...attendanceRecords].sort(
+    (a, b) => Number(a.roll_number) - Number(b.roll_number)
+  );
 
-    const worksheet = XLSX.utils.json_to_sheet(formattedData);
-    const workbook = XLSX.utils.book_new();
+  const formattedData = sortedRecords.map((record) => ({
+    "Roll No": record.roll_number,
+    Status: record.status,
+    "Date & Time": new Date(record.marked_at).toLocaleString(),
+  }));
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
+  const worksheet = XLSX.utils.json_to_sheet(formattedData);
+  const workbook = XLSX.utils.book_new();
 
-    XLSX.writeFile(
-      workbook,
-      `attendance_${classCode}_${new Date().toISOString().slice(0, 10)}.xlsx`
-    );
-  };
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
+
+  XLSX.writeFile(
+    workbook,
+    `attendance_${classCode}_${new Date().toISOString().slice(0, 10)}.xlsx`
+  );
+};
 
   /* ---------------- UI ---------------- */
   return (
